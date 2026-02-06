@@ -6,14 +6,15 @@ const int LDR_PIN_A = 15;
 const int LDR_PIN_B = 4;  
 const int LED_PIN_A = 18;  
 const int LED_PIN_B = 19;  
-const float DIFF_THRESHOLD_POS = 0.5f;
-const float DIFF_THRESHOLD_NEG = -0.5f;
+const float DIFF_THRESHOLD_POS = 0.1f;
+const float DIFF_THRESHOLD_NEG = -0.1f;
 
 // Read interval
-const unsigned long READ_INTERVAL_MS = 100;
-const unsigned long ACTION_INTERVAL_MS = 500;
+const unsigned long READ_INTERVAL_MS = 30;
+const unsigned long ACTION_INTERVAL_MS = 300;
 unsigned long last_read_time = 0;
-float diff_sum = 0.0f;
+uint32_t sum_a = 0;
+uint32_t sum_b = 0;
 unsigned int diff_count = 0;
 
 void setup() {
@@ -41,27 +42,30 @@ void loop() {
         int value_a = analogRead(LDR_PIN_A);
         int value_b = analogRead(LDR_PIN_B);
 
-        float difference_percent = 0.0f;
-
-        // Relative difference calculation
-        if (value_a + value_b > 0) {
-            difference_percent =
-                ((float)(value_a - value_b) /
-                 (float)(value_a + value_b)) * 100.0f;
-        }
-
-        // Safety clamp
-        difference_percent = constrain(difference_percent, -100.0f, 100.0f);
-
-        diff_sum += difference_percent;
+        sum_a += (uint32_t)value_a;
+        sum_b += (uint32_t)value_b;
         diff_count++;
 
         const unsigned int samples_per_action =
             (READ_INTERVAL_MS > 0) ? max(1UL, ACTION_INTERVAL_MS / READ_INTERVAL_MS) : 1U;
 
         if (diff_count >= samples_per_action) {
-            float diff_avg = diff_sum / (float)diff_count;
-            diff_sum = 0.0f;
+            const uint32_t total_sum = sum_a + sum_b;
+            float diff_avg = 0.0f;
+            if (total_sum > 0) {
+                diff_avg =
+                    ((float)((int32_t)sum_a - (int32_t)sum_b) /
+                     (float)total_sum) * 100.0f;
+            }
+
+            // Safety clamp
+            diff_avg = constrain(diff_avg, -100.0f, 100.0f);
+
+            const uint32_t avg_a = sum_a / diff_count;
+            const uint32_t avg_b = sum_b / diff_count;
+
+            sum_a = 0;
+            sum_b = 0;
             diff_count = 0;
 
             if (diff_avg > DIFF_THRESHOLD_POS) {
@@ -77,9 +81,9 @@ void loop() {
 
             // Serial log
             Serial.print("LDR_A=");
-            Serial.print(value_a);
+            Serial.print(avg_a);
             Serial.print(" | LDR_B=");
-            Serial.print(value_b);
+            Serial.print(avg_b);
             Serial.print(" | DIFF_AVG=");
             Serial.print(diff_avg, 2);
             Serial.println(" %");
