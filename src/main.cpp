@@ -1,65 +1,57 @@
 #include <Arduino.h>
-#include "DHT.h"
-#include <Wire.h>
-#include <hd44780.h>
-#include <hd44780ioClass/hd44780_I2Cexp.h>
+#include <WiFi.h>
 
-// ===== CONFIGURACIÓN DHT11 =====
-#define DHTPIN 4
-#define DHTTYPE DHT11
-DHT dht(DHTPIN, DHTTYPE);
+// Analog input pins
+const int LDR_PIN_A = 15; 
+const int LDR_PIN_B = 4;  
+const int LED_PIN_A = 18;  
+const int LED_PIN_B = 19;  
 
-// ===== CONFIGURACIÓN LCD I2C =====
-hd44780_I2Cexp lcd; // Objeto LCD I2C
-const uint8_t LCD_COLS = 16;
-const uint8_t LCD_ROWS = 2;
+// Read interval
+const unsigned long READ_INTERVAL_MS = 100;
+unsigned long last_read_time = 0;
 
 void setup() {
-  Serial.begin(115200);
-  dht.begin();
+    Serial.begin(115200);
+    WiFi.mode(WIFI_OFF);
 
-  // Inicializar pantalla
-  lcd.begin(LCD_COLS, LCD_ROWS);
-  lcd.backlight();
+    // ESP32 ADC configuration
+    analogReadResolution(12);       // Range: 0–4095
+    analogSetAttenuation(ADC_11db); // Up to ~3.3 V
 
-  lcd.setCursor(0, 0);
-  lcd.print("DHT11 iniciado!");
-  Serial.println("DHT11 iniciado. Leyendo datos...");
-  delay(2000); // Espera para leer mensaje inicial
+    Serial.println("System initialized");
+    Serial.println("Format: LDR_A | LDR_B | DIFF_%");
 }
 
 void loop() {
-  float humedad = dht.readHumidity();
-  float temperatura = dht.readTemperature();
+    unsigned long current_time = millis();
 
-  lcd.clear(); // Limpiar pantalla antes de mostrar valores
+    if (current_time - last_read_time >= READ_INTERVAL_MS) {
+        last_read_time = current_time;
 
-  if (isnan(humedad) || isnan(temperatura)) {
-    lcd.setCursor(0, 0);
-    lcd.print("Error lectura");
-    Serial.println("Error leyendo DHT11!");
-  } else {
-    // Mostrar temperatura en la primera fila
-    lcd.setCursor(0, 0);
-    lcd.print("T: ");
-    lcd.print(temperatura, 1);
-    lcd.print((char)223); // Símbolo °
-    lcd.print("C");
+        // Read voltage dividers
+        int value_a = analogRead(LDR_PIN_A);
+        int value_b = analogRead(LDR_PIN_B);
 
-    // Mostrar humedad en la segunda fila
-    lcd.setCursor(0, 1);
-    lcd.print("H: ");
-    lcd.print(humedad, 1);
-    lcd.print("%");
+        float difference_percent = 0.0f;
 
-    // También imprimir en monitor serie
-    Serial.print("Temperatura: ");
-    Serial.print(temperatura, 1);
-    Serial.print(" °C  ");
-    Serial.print("Humedad: ");
-    Serial.print(humedad, 1);
-    Serial.println(" %");
-  }
+        // Relative difference calculation
+        if (value_a + value_b > 0) {
+            difference_percent =
+                ((float)(value_a - value_b) /
+                 (float)(value_a + value_b)) * 100.0f;
+        }
 
-  delay(2000); // Espera 2 segundos entre lecturas
+        // Safety clamp
+        difference_percent = constrain(difference_percent, -100.0f, 100.0f);
+
+        // Serial log
+        Serial.print("LDR_A=");
+        Serial.print(value_a);
+        Serial.print(" | LDR_B=");
+        Serial.print(value_b);
+        Serial.print(" | DIFF=");
+        Serial.print(difference_percent, 2);
+        Serial.println(" %");
+    }
 }
