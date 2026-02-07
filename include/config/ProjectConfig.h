@@ -1,0 +1,149 @@
+#pragma once
+
+#include <Arduino.h>
+
+#include "sensors/LightSensorPair.h"
+#include "drivers/MotorDriver.h"
+#include "track/TrackerController.h"
+#include "sensors/Dht11Sensor.h"
+
+namespace ProjectConfig {
+
+//! ----- Tracking H axis (Horizontal) -----
+// LDR pins (analog inputs)
+static const int LDR_H_PIN_A = 15;
+static const int LDR_H_PIN_B = 4;
+
+// Motor driver pins (H-bridge inputs)
+static const int MOTOR_H_IN1_PIN = 16;
+static const int MOTOR_H_IN2_PIN = 17;
+
+// Timing for light tracking (ms)
+static const unsigned long READ_INTERVAL_MS_H = 30;
+static const unsigned long ACTION_INTERVAL_MS_H = 300;
+static const unsigned long MOTOR_UPDATE_INTERVAL_MS_H = 30;
+
+// Diff thresholds (percent). Deadband stops the motor target (0 PWM).
+static const float DIFF_DEADBAND_POS_H = 1.0f;
+static const float DIFF_DEADBAND_NEG_H = -1.0f;
+static const float DIFF_PWM_THRESHOLD_H = 10.0f;
+
+// PWM config (normalized min/max, 0..1)
+static const int MOTOR_PWM_FREQ_H = 20000;
+static const int MOTOR_PWM_RES_BITS_H = 8;
+static const int MOTOR_PWM_CH_IN1_H = 0;
+static const int MOTOR_PWM_CH_IN2_H = 1;
+static const float MOTOR_PWM_MIN_NORM_H = 0.3f; // 0..1
+static const float MOTOR_PWM_MAX_NORM_H = 0.9f; // 0..1
+static const float MOTOR_PWM_SMOOTH_H = 0.7f;   // 0..1 (0 = instant, 1 = very smooth)
+
+// Logging toggle for H tracking
+static const bool LOG_H_ENABLED = true;
+
+// Light sensor pair configuration (H)
+static const LightSensorPair::Config SENSOR_CFG_H = {
+    LDR_H_PIN_A,
+    LDR_H_PIN_B,
+    READ_INTERVAL_MS_H,
+    ACTION_INTERVAL_MS_H
+};
+
+// Tracking controller configuration (H)
+static const TrackerController::Config TRACKER_CFG_H = {
+    DIFF_DEADBAND_POS_H,
+    DIFF_DEADBAND_NEG_H,
+    DIFF_PWM_THRESHOLD_H,
+    MOTOR_PWM_MIN_NORM_H,
+    MOTOR_PWM_MAX_NORM_H
+};
+
+// Motor driver configuration (H)
+static const MotorDriver::Config MOTOR_CFG_H = {
+    MOTOR_H_IN1_PIN,
+    MOTOR_H_IN2_PIN,
+    MOTOR_PWM_FREQ_H,
+    MOTOR_PWM_RES_BITS_H,
+    MOTOR_PWM_CH_IN1_H,
+    MOTOR_PWM_CH_IN2_H,
+    MOTOR_PWM_SMOOTH_H,
+    MOTOR_UPDATE_INTERVAL_MS_H
+};
+
+//! ----- Tracking V axis (Vertical) -----
+// LDR pins (analog inputs)
+static const int LDR_V_PIN_A = 32;
+static const int LDR_V_PIN_B = 33;
+
+// Motor driver pins (H-bridge inputs)
+static const int MOTOR_V_IN1_PIN = 25;
+static const int MOTOR_V_IN2_PIN = 26;
+
+// Timing for light tracking (ms)
+static const unsigned long READ_INTERVAL_MS_V = 30;
+static const unsigned long ACTION_INTERVAL_MS_V = 300;
+static const unsigned long MOTOR_UPDATE_INTERVAL_MS_V = 30;
+
+// Diff thresholds (percent). Deadband stops the motor target (0 PWM).
+static const float DIFF_DEADBAND_POS_V = 1.0f;
+static const float DIFF_DEADBAND_NEG_V = -1.0f;
+static const float DIFF_PWM_THRESHOLD_V = 10.0f;
+
+// PWM config (normalized min/max, 0..1)
+static const int MOTOR_PWM_FREQ_V = 20000;
+static const int MOTOR_PWM_RES_BITS_V = 8;
+static const int MOTOR_PWM_CH_IN1_V = 2;
+static const int MOTOR_PWM_CH_IN2_V = 3;
+static const float MOTOR_PWM_MIN_NORM_V = 0.3f; // 0..1
+static const float MOTOR_PWM_MAX_NORM_V = 0.9f; // 0..1
+static const float MOTOR_PWM_SMOOTH_V = 0.7f;   // 0..1 (0 = instant, 1 = very smooth)
+
+// Logging toggle for V tracking
+static const bool LOG_V_ENABLED = true;
+
+// Light sensor pair configuration (V)
+static const LightSensorPair::Config SENSOR_CFG_V = {
+    LDR_V_PIN_A,
+    LDR_V_PIN_B,
+    READ_INTERVAL_MS_V,
+    ACTION_INTERVAL_MS_V
+};
+
+// Tracking controller configuration (V)
+static const TrackerController::Config TRACKER_CFG_V = {
+    DIFF_DEADBAND_POS_V,
+    DIFF_DEADBAND_NEG_V,
+    DIFF_PWM_THRESHOLD_V,
+    MOTOR_PWM_MIN_NORM_V,
+    MOTOR_PWM_MAX_NORM_V
+};
+
+// Motor driver configuration (V)
+static const MotorDriver::Config MOTOR_CFG_V = {
+    MOTOR_V_IN1_PIN,
+    MOTOR_V_IN2_PIN,
+    MOTOR_PWM_FREQ_V,
+    MOTOR_PWM_RES_BITS_V,
+    MOTOR_PWM_CH_IN1_V,
+    MOTOR_PWM_CH_IN2_V,
+    MOTOR_PWM_SMOOTH_V,
+    MOTOR_UPDATE_INTERVAL_MS_V
+};
+
+//! ----- DHT11 config -----
+static const int DHT11_PIN = 21;
+static const unsigned long DHT11_REPORT_INTERVAL_MS = 20000;
+static const unsigned int DHT11_SAMPLES_PER_REPORT = 5;
+static const int DHT11_TYPE = DHT11;
+
+// Logging toggle for DHT
+static const bool DHT_LOG_ENABLED = true;
+
+// DHT11 sensor configuration
+static const Dht11Sensor::Config DHT_CFG = {
+    DHT11_PIN,
+    DHT11_REPORT_INTERVAL_MS,
+    DHT11_SAMPLES_PER_REPORT,
+    DHT11_TYPE
+};
+
+} // namespace ProjectConfig
