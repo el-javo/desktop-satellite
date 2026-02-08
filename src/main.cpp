@@ -1,27 +1,68 @@
 #include <Arduino.h>
-#include <TFT_eSPI.h>
+#include <WiFi.h>
 
-TFT_eSPI tft;
+#include "track/TrackingUnit.h"
+#include "sensors/Dht11Sensor.h"
+#include "display/DisplayManager.h"
+#include "config/ProjectConfig.h"
+
+TrackingUnit tracker_unit(
+    ProjectConfig::SENSOR_CFG_H,
+    ProjectConfig::TRACKER_CFG_H,
+    ProjectConfig::MOTOR_CFG_H);
+
+Dht11Sensor dht11(ProjectConfig::DHT_CFG);
+DisplayManager display(ProjectConfig::DISPLAY_CFG);
 
 void setup() {
     Serial.begin(115200);
-    tft.init();
-    tft.setRotation(0);
+    WiFi.mode(WIFI_OFF);
 
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setTextSize(2);
-    tft.setCursor(20, 20);
-    tft.println("TFT_eSPI");
+    // ESP32 ADC configuration
+    analogReadResolution(12);       // Range: 0-4095
+    analogSetAttenuation(ADC_11db); // Up to ~3.3 V
+
+    tracker_unit.begin();
+    dht11.begin();
+    display.begin();
+    display.setMode(DisplayManager::Mode::Tracking);
+
+    Serial.println("System initialized");
+    Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
 }
 
 void loop() {
-    tft.fillScreen(TFT_RED);
-    delay(500);
-    tft.fillScreen(TFT_GREEN);
-    delay(500);
-    tft.fillScreen(TFT_BLUE);
-    delay(500);
-    tft.fillScreen(TFT_BLACK);
-    delay(500);
+    const unsigned long now_ms = millis();
+    tracker_unit.tick(now_ms);
+    dht11.tick(now_ms);
+    display.tick(now_ms);
+
+    if (ProjectConfig::LOG_H_ENABLED) {
+        TrackingUnit::LogSample log;
+        if (tracker_unit.consumeLog(log)) {
+            display.setTrackingInfo(log.diff_percent);
+            Serial.print("LDR_A=");
+            Serial.print(log.avg_a);
+            Serial.print(" | LDR_B=");
+            Serial.print(log.avg_b);
+            Serial.print(" | DIFF_AVG=");
+            Serial.print(log.diff_percent, 2);
+            Serial.print(" %");
+            Serial.print(" | PWM=");
+            Serial.println(log.applied_raw);
+        }
+    }
+
+    if (ProjectConfig::DHT_LOG_ENABLED) {
+        Dht11Sensor::Sample dht_log;
+        if (dht11.consumeSample(dht_log)) {
+            display.setEnvironment(dht_log.temperature_c, dht_log.humidity_pct);
+            Serial.print("DHT11 T=");
+            Serial.print(dht_log.temperature_c, 1);
+            Serial.print(" C");
+            Serial.print(" | H=");
+            Serial.print(dht_log.humidity_pct, 1);
+            Serial.println(" %");
+        }
+    }
 }

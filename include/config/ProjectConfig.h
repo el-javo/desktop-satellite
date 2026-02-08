@@ -13,7 +13,7 @@ namespace ProjectConfig {
 //! ----- Tracking H axis (Horizontal) -----
 // LDR pins (analog inputs)
 static const int LDR_H_PIN_A = 15;
-static const int LDR_H_PIN_B = 4;
+static const int LDR_H_PIN_B = 5;
 
 // Motor driver pins (H-bridge inputs)
 static const int MOTOR_H_IN1_PIN = 16;
@@ -71,13 +71,13 @@ static const MotorDriver::Config MOTOR_CFG_H = {
 };
 
 //! ----- Tracking V axis (Vertical) -----
-// LDR pins (analog inputs)
-static const int LDR_V_PIN_A = 32;
-static const int LDR_V_PIN_B = 33;
+// LDR pins (analog inputs) - not available with current pin budget
+static const int LDR_V_PIN_A = -1;
+static const int LDR_V_PIN_B = -1;
 
-// Motor driver pins (H-bridge inputs)
-static const int MOTOR_V_IN1_PIN = 25;
-static const int MOTOR_V_IN2_PIN = 26;
+// Motor driver pins (H-bridge inputs) - not available with current pin budget
+static const int MOTOR_V_IN1_PIN = -1;
+static const int MOTOR_V_IN2_PIN = -1;
 
 // Timing for light tracking (ms)
 static const unsigned long READ_INTERVAL_MS_V = 30;
@@ -133,9 +133,9 @@ static const MotorDriver::Config MOTOR_CFG_V = {
 //! ----- TFT ST7789 config -----
 static const int TFT_PIN_SCK = 18;
 static const int TFT_PIN_MOSI = 23;
-static const int TFT_PIN_DC = 22;
-static const int TFT_PIN_RST = 5;
-static const int TFT_PIN_BLK = 19;
+static const int TFT_PIN_DC = 2;
+static const int TFT_PIN_RST = 4;
+static const int TFT_PIN_BLK = -1; // backlight to 3V3
 static const int TFT_PIN_CS = -1; // not connected
 static const unsigned long TFT_REFRESH_INTERVAL_MS = 200;
 
@@ -144,9 +144,6 @@ static const DisplayManager::Config DISPLAY_CFG = {
     TFT_PIN_DC,
     TFT_PIN_RST,
     TFT_PIN_BLK,
-    TFT_PIN_SCK,
-    TFT_PIN_MOSI,
-    TFT_PIN_CS,
     TFT_REFRESH_INTERVAL_MS
 };
 

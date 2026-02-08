@@ -1,9 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_ST7789.h>
+#include <TFT_eSPI.h>
 
 class DisplayManager {
 public:
@@ -18,41 +16,21 @@ public:
         int pin_dc;
         int pin_rst;
         int pin_blk;
-        int pin_sck;
-        int pin_mosi;
-        int pin_cs; // use -1 if not connected
         unsigned long refresh_interval_ms;
     };
 
     explicit DisplayManager(const Config& cfg)
-        : cfg_(cfg),
-          tft_(cfg.pin_cs, cfg.pin_dc, cfg.pin_rst) {}
+        : cfg_(cfg) {}
 
     void begin() {
-        if (cfg_.pin_dc >= 0) {
-            pinMode(cfg_.pin_dc, OUTPUT);
-        }
-        if (cfg_.pin_rst >= 0) {
-            pinMode(cfg_.pin_rst, OUTPUT);
-            digitalWrite(cfg_.pin_rst, HIGH);
-            delay(10);
-            digitalWrite(cfg_.pin_rst, LOW);
-            delay(50);
-            digitalWrite(cfg_.pin_rst, HIGH);
-            delay(150);
-        }
         if (cfg_.pin_blk >= 0) {
             pinMode(cfg_.pin_blk, OUTPUT);
-            digitalWrite(cfg_.pin_blk, LOW);
-            delay(5);
             digitalWrite(cfg_.pin_blk, HIGH);
         }
 
-        SPI.begin(cfg_.pin_sck, -1, cfg_.pin_mosi, cfg_.pin_cs);
-        tft_.setSPISpeed(27000000);
-        tft_.init(240, 240);
+        tft_.init();
         tft_.setRotation(0);
-        tft_.fillScreen(ST77XX_BLACK);
+        tft_.fillScreen(TFT_BLACK);
         mode_ = Mode::Off;
         last_draw_ms_ = 0;
     }
@@ -100,42 +78,42 @@ public:
 
 private:
     void drawHeader(const char* title) {
-        tft_.fillRect(0, 0, 240, 28, ST77XX_BLUE);
-        tft_.setTextColor(ST77XX_WHITE, ST77XX_BLUE);
+        tft_.fillRect(0, 0, 240, 28, TFT_BLUE);
+        tft_.setTextColor(TFT_WHITE, TFT_BLUE);
         tft_.setTextSize(2);
         tft_.setCursor(8, 6);
         tft_.print(title);
     }
 
     void drawOff() {
-        tft_.fillScreen(ST77XX_BLACK);
+        tft_.fillScreen(TFT_BLACK);
         drawHeader("OFF");
     }
 
     void drawConnecting() {
-        tft_.fillScreen(ST77XX_BLACK);
+        tft_.fillScreen(TFT_BLACK);
         drawHeader("CONNECT");
-        tft_.setTextColor(ST77XX_YELLOW, ST77XX_BLACK);
+        tft_.setTextColor(TFT_YELLOW, TFT_BLACK);
         tft_.setTextSize(2);
         tft_.setCursor(20, 80);
         tft_.print("Connecting...");
     }
 
     void drawDashboard() {
-        tft_.fillScreen(ST77XX_BLACK);
+        tft_.fillScreen(TFT_BLACK);
         drawHeader("DASH");
         drawEnvBlock(10, 40);
     }
 
     void drawTracking() {
-        tft_.fillScreen(ST77XX_BLACK);
+        tft_.fillScreen(TFT_BLACK);
         drawHeader("TRACK");
         drawEnvBlock(10, 40);
         drawDiffGauge(10, 120, 220, 40);
     }
 
     void drawEnvBlock(int x, int y) {
-        tft_.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
+        tft_.setTextColor(TFT_WHITE, TFT_BLACK);
         tft_.setTextSize(2);
         tft_.setCursor(x, y);
         tft_.print("T: ");
@@ -148,17 +126,17 @@ private:
     }
 
     void drawDiffGauge(int x, int y, int w, int h) {
-        tft_.drawRect(x, y, w, h, ST77XX_WHITE);
+        tft_.drawRect(x, y, w, h, TFT_WHITE);
         const int center_x = x + w / 2;
-        tft_.drawLine(center_x, y, center_x, y + h, ST77XX_WHITE);
+        tft_.drawLine(center_x, y, center_x, y + h, TFT_WHITE);
 
         float diff = diff_percent_;
         diff = constrain(diff, -100.0f, 100.0f);
         const int marker_x = center_x + (int)((diff / 100.0f) * (w / 2 - 2));
-        tft_.fillRect(x + 1, y + 1, w - 2, h - 2, ST77XX_BLACK);
-        tft_.drawLine(marker_x, y + 2, marker_x, y + h - 2, ST77XX_GREEN);
+        tft_.fillRect(x + 1, y + 1, w - 2, h - 2, TFT_BLACK);
+        tft_.drawLine(marker_x, y + 2, marker_x, y + h - 2, TFT_GREEN);
 
-        tft_.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
+        tft_.setTextColor(TFT_WHITE, TFT_BLACK);
         tft_.setTextSize(1);
         tft_.setCursor(x, y + h + 6);
         tft_.print("Diff: ");
@@ -167,7 +145,7 @@ private:
     }
 
     Config cfg_;
-    Adafruit_ST7789 tft_;
+    TFT_eSPI tft_;
     Mode mode_ = Mode::Off;
     bool dirty_ = true;
     unsigned long last_draw_ms_ = 0;
