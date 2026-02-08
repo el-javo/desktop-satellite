@@ -33,12 +33,14 @@ public:
         tft_.fillScreen(TFT_BLACK);
         mode_ = Mode::Off;
         last_draw_ms_ = 0;
+        force_full_redraw_ = true;
     }
 
     void setMode(Mode mode) {
         if (mode_ != mode) {
             mode_ = mode;
             dirty_ = true;
+            force_full_redraw_ = true;
         }
     }
 
@@ -86,33 +88,51 @@ private:
     }
 
     void drawOff() {
-        tft_.fillScreen(TFT_BLACK);
+        if (force_full_redraw_) {
+            tft_.fillScreen(TFT_BLACK);
+        }
         drawHeader("OFF");
     }
 
     void drawConnecting() {
-        tft_.fillScreen(TFT_BLACK);
+        if (force_full_redraw_) {
+            tft_.fillScreen(TFT_BLACK);
+        }
         drawHeader("CONNECT");
         tft_.setTextColor(TFT_YELLOW, TFT_BLACK);
         tft_.setTextSize(2);
         tft_.setCursor(20, 80);
         tft_.print("Connecting...");
+        force_full_redraw_ = false;
     }
 
     void drawDashboard() {
-        tft_.fillScreen(TFT_BLACK);
+        if (force_full_redraw_) {
+            tft_.fillScreen(TFT_BLACK);
+        }
         drawHeader("DASH");
         drawEnvBlock(10, 40);
+        force_full_redraw_ = false;
     }
 
     void drawTracking() {
-        tft_.fillScreen(TFT_BLACK);
+        if (force_full_redraw_) {
+            tft_.fillScreen(TFT_BLACK);
+        }
         drawHeader("TRACK");
         drawEnvBlock(10, 40);
         drawDiffGauge(10, 120, 220, 40);
+        force_full_redraw_ = false;
     }
 
     void drawEnvBlock(int x, int y) {
+        if (!force_full_redraw_ &&
+            temp_c_ == last_temp_c_ &&
+            humidity_pct_ == last_humidity_pct_) {
+            return;
+        }
+
+        tft_.fillRect(x, y, 220, 52, TFT_BLACK);
         tft_.setTextColor(TFT_WHITE, TFT_BLACK);
         tft_.setTextSize(2);
         tft_.setCursor(x, y);
@@ -123,9 +143,15 @@ private:
         tft_.print("H: ");
         tft_.print(humidity_pct_, 1);
         tft_.print(" %");
+        last_temp_c_ = temp_c_;
+        last_humidity_pct_ = humidity_pct_;
     }
 
     void drawDiffGauge(int x, int y, int w, int h) {
+        if (!force_full_redraw_ && diff_percent_ == last_diff_percent_) {
+            return;
+        }
+
         tft_.drawRect(x, y, w, h, TFT_WHITE);
         const int center_x = x + w / 2;
         tft_.drawLine(center_x, y, center_x, y + h, TFT_WHITE);
@@ -136,20 +162,26 @@ private:
         tft_.fillRect(x + 1, y + 1, w - 2, h - 2, TFT_BLACK);
         tft_.drawLine(marker_x, y + 2, marker_x, y + h - 2, TFT_GREEN);
 
+        tft_.fillRect(x, y + h + 6, 220, 12, TFT_BLACK);
         tft_.setTextColor(TFT_WHITE, TFT_BLACK);
         tft_.setTextSize(1);
         tft_.setCursor(x, y + h + 6);
         tft_.print("Diff: ");
         tft_.print(diff_percent_, 1);
         tft_.print(" %");
+        last_diff_percent_ = diff_percent_;
     }
 
     Config cfg_;
     TFT_eSPI tft_;
     Mode mode_ = Mode::Off;
     bool dirty_ = true;
+    bool force_full_redraw_ = true;
     unsigned long last_draw_ms_ = 0;
     float temp_c_ = 0.0f;
     float humidity_pct_ = 0.0f;
     float diff_percent_ = 0.0f;
+    float last_temp_c_ = 9999.0f;
+    float last_humidity_pct_ = 9999.0f;
+    float last_diff_percent_ = 9999.0f;
 };

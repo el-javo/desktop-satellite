@@ -137,7 +137,7 @@ static const int TFT_PIN_DC = 2;
 static const int TFT_PIN_RST = 4;
 static const int TFT_PIN_BLK = -1;
 static const int TFT_PIN_CS = -1; 
-static const unsigned long TFT_REFRESH_INTERVAL_MS = 200;
+static const unsigned long TFT_REFRESH_INTERVAL_MS = 500;
 
 // Display configuration
 static const DisplayManager::Config DISPLAY_CFG = {
