@@ -6,6 +6,11 @@
 #define TFT_WIDTH  240
 #define TFT_HEIGHT 240
 
+// Fonts to compile in (required for any on-screen text)
+#define LOAD_GLCD
+#define LOAD_FONT2
+#define LOAD_FONT4
+
 // No CS pin on this module
 #define TFT_CS  -1
 
@@ -24,4 +29,4 @@
 #define SPI_FREQUENCY  10000000
 
 // Color order
-#define TFT_RGB_ORDER TFT_RGB
+#define TFT_RGB_ORDER TFT_BGR

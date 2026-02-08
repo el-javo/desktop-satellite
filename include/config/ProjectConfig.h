@@ -12,8 +12,8 @@ namespace ProjectConfig {
 
 //! ----- Tracking H axis (Horizontal) -----
 // LDR pins (analog inputs)
-static const int LDR_H_PIN_A = 32;
-static const int LDR_H_PIN_B = 33;
+static const int LDR_H_PIN_A = 33;
+static const int LDR_H_PIN_B = 35;
 
 // Motor driver pins (H-bridge inputs)
 static const int MOTOR_H_IN1_PIN = 16;
@@ -80,8 +80,8 @@ static const int MOTOR_V_IN1_PIN = -1;
 static const int MOTOR_V_IN2_PIN = -1;
 
 // Timing for light tracking (ms)
-static const unsigned long READ_INTERVAL_MS_V = 30;
-static const unsigned long ACTION_INTERVAL_MS_V = 300;
+static const unsigned long READ_INTERVAL_MS_V = 25;
+static const unsigned long ACTION_INTERVAL_MS_V = 500;
 static const unsigned long MOTOR_UPDATE_INTERVAL_MS_V = 30;
 
 // Diff thresholds (percent). Deadband stops the motor target (0 PWM).

@@ -26,6 +26,8 @@ void setup() {
     dht11.begin();
     display.begin();
     display.setMode(DisplayManager::Mode::Tracking);
+    display.setDeadzonePercent(ProjectConfig::DIFF_DEADBAND_POS_H);
+    display.setPwmThresholdPercent(ProjectConfig::DIFF_PWM_THRESHOLD_H);
 
     Serial.println("System initialized");
     Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
@@ -35,12 +37,11 @@ void loop() {
     const unsigned long now_ms = millis();
     tracker_unit.tick(now_ms);
     dht11.tick(now_ms);
-    display.tick(now_ms);
 
-    if (ProjectConfig::LOG_H_ENABLED) {
-        TrackingUnit::LogSample log;
-        if (tracker_unit.consumeLog(log)) {
-            display.setTrackingInfo(log.diff_percent);
+    TrackingUnit::LogSample log;
+    if (tracker_unit.consumeLog(log)) {
+        display.setTrackingInfo(log.diff_percent);
+        if (ProjectConfig::LOG_H_ENABLED) {
             Serial.print("LDR_A=");
             Serial.print(log.avg_a);
             Serial.print(" | LDR_B=");
@@ -53,10 +54,10 @@ void loop() {
         }
     }
 
-    if (ProjectConfig::DHT_LOG_ENABLED) {
-        Dht11Sensor::Sample dht_log;
-        if (dht11.consumeSample(dht_log)) {
-            display.setEnvironment(dht_log.temperature_c, dht_log.humidity_pct);
+    Dht11Sensor::Sample dht_log;
+    if (dht11.consumeSample(dht_log)) {
+        display.setEnvironment(dht_log.temperature_c, dht_log.humidity_pct);
+        if (ProjectConfig::DHT_LOG_ENABLED) {
             Serial.print("DHT11 T=");
             Serial.print(dht_log.temperature_c, 1);
             Serial.print(" C");
@@ -65,4 +66,6 @@ void loop() {
             Serial.println(" %");
         }
     }
+
+    display.tick(now_ms);
 }
