@@ -6,6 +6,7 @@
 #include "drivers/MotorDriver.h"
 #include "track/TrackerController.h"
 #include "sensors/Dht11Sensor.h"
+#include "display/DisplayManager.h"
 
 namespace ProjectConfig {
 
@@ -127,6 +128,26 @@ static const MotorDriver::Config MOTOR_CFG_V = {
     MOTOR_PWM_CH_IN2_V,
     MOTOR_PWM_SMOOTH_V,
     MOTOR_UPDATE_INTERVAL_MS_V
+};
+
+//! ----- TFT ST7789 config -----
+static const int TFT_PIN_SCK = 18;
+static const int TFT_PIN_MOSI = 23;
+static const int TFT_PIN_DC = 22;
+static const int TFT_PIN_RST = 5;
+static const int TFT_PIN_BLK = 19;
+static const int TFT_PIN_CS = -1; // not connected
+static const unsigned long TFT_REFRESH_INTERVAL_MS = 200;
+
+// Display configuration
+static const DisplayManager::Config DISPLAY_CFG = {
+    TFT_PIN_DC,
+    TFT_PIN_RST,
+    TFT_PIN_BLK,
+    TFT_PIN_SCK,
+    TFT_PIN_MOSI,
+    TFT_PIN_CS,
+    TFT_REFRESH_INTERVAL_MS
 };
 
 //! ----- DHT11 config -----

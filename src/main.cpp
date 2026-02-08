@@ -3,6 +3,7 @@
 
 #include "track/TrackingUnit.h"
 #include "sensors/Dht11Sensor.h"
+#include "display/DisplayManager.h"
 #include "config/ProjectConfig.h"
 
 TrackingUnit tracker_unit(
@@ -11,6 +12,7 @@ TrackingUnit tracker_unit(
     ProjectConfig::MOTOR_CFG_H);
 
 Dht11Sensor dht11(ProjectConfig::DHT_CFG);
+DisplayManager display(ProjectConfig::DISPLAY_CFG);
 
 void setup() {
     Serial.begin(115200);
@@ -22,6 +24,8 @@ void setup() {
 
     tracker_unit.begin();
     dht11.begin();
+    display.begin();
+    display.setMode(DisplayManager::Mode::Tracking);
 
     Serial.println("System initialized");
     Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
@@ -31,10 +35,12 @@ void loop() {
     const unsigned long now_ms = millis();
     tracker_unit.tick(now_ms);
     dht11.tick(now_ms);
+    display.tick(now_ms);
 
     if (ProjectConfig::LOG_H_ENABLED) {
         TrackingUnit::LogSample log;
         if (tracker_unit.consumeLog(log)) {
+            display.setTrackingInfo(log.diff_percent);
             Serial.print("LDR_A=");
             Serial.print(log.avg_a);
             Serial.print(" | LDR_B=");
@@ -50,6 +56,7 @@ void loop() {
     if (ProjectConfig::DHT_LOG_ENABLED) {
         Dht11Sensor::Sample dht_log;
         if (dht11.consumeSample(dht_log)) {
+            display.setEnvironment(dht_log.temperature_c, dht_log.humidity_pct);
             Serial.print("DHT11 T=");
             Serial.print(dht_log.temperature_c, 1);
             Serial.print(" C");
