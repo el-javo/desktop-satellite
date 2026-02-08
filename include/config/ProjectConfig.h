@@ -12,8 +12,8 @@ namespace ProjectConfig {
 
 //! ----- Tracking H axis (Horizontal) -----
 // LDR pins (analog inputs)
-static const int LDR_H_PIN_A = 15;
-static const int LDR_H_PIN_B = 5;
+static const int LDR_H_PIN_A = 32;
+static const int LDR_H_PIN_B = 33;
 
 // Motor driver pins (H-bridge inputs)
 static const int MOTOR_H_IN1_PIN = 16;
@@ -135,8 +135,8 @@ static const int TFT_PIN_SCK = 18;
 static const int TFT_PIN_MOSI = 23;
 static const int TFT_PIN_DC = 2;
 static const int TFT_PIN_RST = 4;
-static const int TFT_PIN_BLK = -1; // backlight to 3V3
-static const int TFT_PIN_CS = -1; // not connected
+static const int TFT_PIN_BLK = -1;
+static const int TFT_PIN_CS = -1; 
 static const unsigned long TFT_REFRESH_INTERVAL_MS = 200;
 
 // Display configuration
