@@ -3,8 +3,15 @@
 
 #include "track/TrackingUnit.h"
 #include "sensors/Dht11Sensor.h"
+#include "sensors/TouchButton.h"
 #include "display/DisplayManager.h"
 #include "config/ProjectConfig.h"
+
+enum class SystemMode {
+    Active,
+    ActiveBlocked,
+    DeepSleep
+};
 
 TrackingUnit tracking_unit_h(
     ProjectConfig::SENSOR_CFG_H,
@@ -16,7 +23,22 @@ TrackingUnit tracking_unit_v(
     ProjectConfig::MOTOR_CFG_V);
 
 Dht11Sensor dht11(ProjectConfig::DHT_CFG);
+TouchButton touch_button(ProjectConfig::TOUCH_BUTTON_CFG);
 DisplayManager display(ProjectConfig::DISPLAY_CFG);
+SystemMode system_mode = SystemMode::Active;
+
+static const char* systemModeLabel(SystemMode mode) {
+    switch (mode) {
+    case SystemMode::Active:
+        return "ACTIVE";
+    case SystemMode::ActiveBlocked:
+        return "ACTIVE_BLOCKED";
+    case SystemMode::DeepSleep:
+        return "DEEPSLEEP";
+    default:
+        return "UNKNOWN";
+    }
+}
 
 void setup() {
     Serial.begin(115200);
@@ -29,6 +51,7 @@ void setup() {
     tracking_unit_h.begin();
     tracking_unit_v.begin();
     dht11.begin();
+    touch_button.begin();
     display.begin();
     display.setMode(DisplayManager::Mode::Tracking);
     display.setDeadbandPercent(ProjectConfig::DISPLAY_DEADBAND_PERCENT);
@@ -36,10 +59,32 @@ void setup() {
 
     Serial.println("System initialized");
     Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
+    Serial.print("System mode: ");
+    Serial.println(systemModeLabel(system_mode));
 }
 
 void loop() {
     const unsigned long now_ms = millis();
+    touch_button.tick(now_ms);
+    if (touch_button.consumeLongPress()) {
+        if (system_mode != SystemMode::DeepSleep) {
+            system_mode = SystemMode::DeepSleep;
+            Serial.print("System mode: ");
+            Serial.println(systemModeLabel(system_mode));
+        }
+    }
+    if (touch_button.consumeShortPress()) {
+        if (system_mode == SystemMode::DeepSleep) {
+            system_mode = SystemMode::Active;
+        } else if (system_mode == SystemMode::Active) {
+            system_mode = SystemMode::ActiveBlocked;
+        } else if (system_mode == SystemMode::ActiveBlocked) {
+            system_mode = SystemMode::Active;
+        }
+        Serial.print("System mode: ");
+        Serial.println(systemModeLabel(system_mode));
+    }
+
     tracking_unit_h.tick(now_ms);
     tracking_unit_v.tick(now_ms);
     dht11.tick(now_ms);

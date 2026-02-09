@@ -7,6 +7,7 @@
 #include "track/TrackerController.h"
 #include "sensors/Dht11Sensor.h"
 #include "display/DisplayManager.h"
+#include "sensors/TouchButton.h"
 
 namespace ProjectConfig {
 
@@ -141,7 +142,7 @@ static const int TFT_PIN_DC = 2;
 static const int TFT_PIN_RST = 4;
 static const int TFT_PIN_BLK = -1;
 static const int TFT_PIN_CS = -1; 
-static const unsigned long TFT_REFRESH_INTERVAL_MS = 500;
+static const unsigned long TFT_REFRESH_INTERVAL_MS = 100;
 static const float DISPLAY_DEADBAND_PERCENT =
     (DIFF_DEADBAND_H > DIFF_DEADBAND_V) ? DIFF_DEADBAND_H : DIFF_DEADBAND_V;
 static const float DISPLAY_PWM_THRESHOLD_PERCENT =
@@ -170,6 +171,19 @@ static const Dht11Sensor::Config DHT_CFG = {
     DHT11_REPORT_INTERVAL_MS,
     DHT11_SAMPLES_PER_REPORT,
     DHT11_TYPE
+};
+
+//! ----- Touch button config -----
+static const int TOUCH_BUTTON_PIN = 15;
+static const bool TOUCH_BUTTON_ACTIVE_HIGH = true;
+static const unsigned long TOUCH_BUTTON_DEBOUNCE_MS = 40;
+static const unsigned long TOUCH_BUTTON_LONG_PRESS_MS = 2000;
+
+static const TouchButton::Config TOUCH_BUTTON_CFG = {
+    TOUCH_BUTTON_PIN,
+    TOUCH_BUTTON_ACTIVE_HIGH,
+    TOUCH_BUTTON_DEBOUNCE_MS,
+    TOUCH_BUTTON_LONG_PRESS_MS
 };
 
 } // namespace ProjectConfig
