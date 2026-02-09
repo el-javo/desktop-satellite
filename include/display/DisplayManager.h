@@ -72,6 +72,17 @@ public:
         dirty_ = true;
     }
 
+    void setBacklight(bool on) {
+        if (cfg_.pin_blk >= 0) {
+            digitalWrite(cfg_.pin_blk, on ? HIGH : LOW);
+        }
+    }
+
+    void setBlocked(bool blocked) {
+        blocked_ = blocked;
+        dirty_ = true;
+    }
+
     void tick(unsigned long now_ms) {
         if (!dirty_ && (now_ms - last_draw_ms_) < cfg_.refresh_interval_ms) {
             return;
@@ -139,8 +150,29 @@ private:
         }
         drawHeader("TRACK");
         drawDiffGaugeCircle(120, 120, 70);
+        drawBlockedIndicator(200, 110);
         drawEnvBlock(10, 200);
         force_full_redraw_ = false;
+    }
+
+    void drawBlockedIndicator(int x, int y) {
+        if (!force_full_redraw_ && blocked_ == last_blocked_) {
+            return;
+        }
+
+        const int size = 18;
+        const uint16_t bg = tft_.color565(20, 20, 20);
+        const uint16_t off_color = tft_.color565(60, 60, 60);
+        const uint16_t on_color = TFT_RED;
+
+        tft_.fillRect(x, y, size, size, bg);
+        tft_.drawRect(x, y, size, size, blocked_ ? on_color : off_color);
+        tft_.setTextDatum(MC_DATUM);
+        tft_.setTextColor(blocked_ ? on_color : off_color, bg);
+        tft_.drawString("B", x + size / 2, y + size / 2, 1);
+        tft_.setTextDatum(TL_DATUM);
+
+        last_blocked_ = blocked_;
     }
 
     void drawEnvBlock(int x, int y) {
@@ -264,4 +296,6 @@ private:
     float last_diff_v_percent_ = 9999.0f;
     float last_deadband_percent_ = 9999.0f;
     float last_pwm_threshold_percent_ = 9999.0f;
+    bool blocked_ = false;
+    bool last_blocked_ = false;
 };

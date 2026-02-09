@@ -43,7 +43,7 @@ static const float MOTOR_PWM_KICK_NORM_H = 0.8f; // 0..1
 static const unsigned long MOTOR_PWM_KICK_MS_H = 200;
 
 // Logging toggle for H tracking
-static const bool LOG_H_ENABLED = true;
+static const bool LOG_H_ENABLED = false;
 
 // Light sensor pair configuration (H)
 static const LightSensorPair::Config SENSOR_CFG_H = {
@@ -102,7 +102,7 @@ static const float MOTOR_PWM_KICK_NORM_V = 0.8f; // 0..1
 static const unsigned long MOTOR_PWM_KICK_MS_V = 200;
 
 // Logging toggle for V tracking
-static const bool LOG_V_ENABLED = true;
+static const bool LOG_V_ENABLED = false;
 
 // Light sensor pair configuration (V)
 static const LightSensorPair::Config SENSOR_CFG_V = {
@@ -133,6 +133,9 @@ static const MotorDriver::Config MOTOR_CFG_V = {
     MOTOR_PWM_KICK_NORM_V,
     MOTOR_PWM_KICK_MS_V
 };
+
+//! ----- Deep sleep config -----
+static const unsigned long SLEEP_INTERVAL_SEC = 7200;
 
 //! ----- TFT ST7789 config -----
 static const int TFT_PIN_SCK = 18;
@@ -177,6 +180,7 @@ static const int TOUCH_BUTTON_PIN = 15;
 static const bool TOUCH_BUTTON_ACTIVE_HIGH = true;
 static const unsigned long TOUCH_BUTTON_DEBOUNCE_MS = 40;
 static const unsigned long TOUCH_BUTTON_LONG_PRESS_MS = 2000;
+static const bool TOUCH_BUTTON_LOG_ENABLED = true;
 
 static const TouchButton::Config TOUCH_BUTTON_CFG = {
     TOUCH_BUTTON_PIN,

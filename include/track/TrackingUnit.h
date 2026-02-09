@@ -38,6 +38,7 @@ public:
         } else if (auto_block_enabled_) {
             motor_enabled = computeAutoBlock(now_ms);
         }
+        motor_enabled_last_ = motor_enabled;
         motor_.setEnabled(motor_enabled);
         motor_.tick(now_ms);
     }
@@ -61,6 +62,8 @@ public:
     }
 
     void clearMotorOverride() { motor_override_active_ = false; }
+
+    bool isMotorEnabled() const { return motor_enabled_last_; }
 
     bool consumeLog(LogSample& out) {
         if (!tracker_.hasNewSample()) {
@@ -127,4 +130,5 @@ private:
     bool has_diff_ = false;
     bool motor_override_active_ = false;
     bool motor_override_enabled_ = true;
+    bool motor_enabled_last_ = true;
 };
