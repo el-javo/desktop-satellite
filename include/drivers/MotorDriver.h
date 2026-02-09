@@ -56,7 +56,32 @@ public:
         target_norm_ = next;
     }
 
+    void setEnabled(bool enabled) {
+        if (enabled_ == enabled) {
+            return;
+        }
+        enabled_ = enabled;
+        if (!enabled_) {
+            filtered_norm_ = 0.0f;
+            last_applied_norm_ = 0.0f;
+            last_pwm_raw_ = 0;
+            kick_pending_ = false;
+            kick_active_until_ms_ = 0;
+            if (has_in1_) {
+                ledcWrite(cfg_.pwm_channel_in1, 0);
+            }
+            if (has_in2_) {
+                ledcWrite(cfg_.pwm_channel_in2, 0);
+            }
+        } else if (target_norm_ != 0.0f) {
+            kick_pending_ = true;
+        }
+    }
+
     void tick(unsigned long now_ms) {
+        if (!enabled_) {
+            return;
+        }
         if (cfg_.update_interval_ms > 0 &&
             (now_ms - last_update_ms_) < cfg_.update_interval_ms) {
             return;
@@ -133,4 +158,5 @@ private:
     int last_target_sign_ = 0;
     bool has_in1_ = false;
     bool has_in2_ = false;
+    bool enabled_ = true;
 };

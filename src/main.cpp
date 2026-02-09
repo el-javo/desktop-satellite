@@ -40,6 +40,20 @@ static const char* systemModeLabel(SystemMode mode) {
     }
 }
 
+static void applySystemMode(SystemMode mode) {
+    if (mode == SystemMode::Active) {
+        tracking_unit_h.clearMotorOverride();
+        tracking_unit_v.clearMotorOverride();
+        tracking_unit_h.setAutoBlockEnabled(true);
+        tracking_unit_v.setAutoBlockEnabled(true);
+    } else {
+        tracking_unit_h.setAutoBlockEnabled(false);
+        tracking_unit_v.setAutoBlockEnabled(false);
+        tracking_unit_h.setMotorOverride(false);
+        tracking_unit_v.setMotorOverride(false);
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     WiFi.mode(WIFI_OFF);
@@ -50,12 +64,19 @@ void setup() {
 
     tracking_unit_h.begin();
     tracking_unit_v.begin();
+    tracking_unit_h.setAutoBlockConfig(
+        ProjectConfig::AUTO_BLOCK_DEADBAND_HOLD_MS,
+        ProjectConfig::AUTO_BLOCK_DURATION_MS);
+    tracking_unit_v.setAutoBlockConfig(
+        ProjectConfig::AUTO_BLOCK_DEADBAND_HOLD_MS,
+        ProjectConfig::AUTO_BLOCK_DURATION_MS);
     dht11.begin();
     touch_button.begin();
     display.begin();
     display.setMode(DisplayManager::Mode::Tracking);
     display.setDeadbandPercent(ProjectConfig::DISPLAY_DEADBAND_PERCENT);
     display.setPwmThresholdPercent(ProjectConfig::DISPLAY_PWM_THRESHOLD_PERCENT);
+    applySystemMode(system_mode);
 
     Serial.println("System initialized");
     Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
@@ -66,6 +87,7 @@ void setup() {
 void loop() {
     const unsigned long now_ms = millis();
     touch_button.tick(now_ms);
+    static SystemMode last_mode = system_mode;
     if (touch_button.consumeLongPress()) {
         if (system_mode != SystemMode::DeepSleep) {
             system_mode = SystemMode::DeepSleep;
@@ -83,6 +105,10 @@ void loop() {
         }
         Serial.print("System mode: ");
         Serial.println(systemModeLabel(system_mode));
+    }
+    if (last_mode != system_mode) {
+        applySystemMode(system_mode);
+        last_mode = system_mode;
     }
 
     tracking_unit_h.tick(now_ms);

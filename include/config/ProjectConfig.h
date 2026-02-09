@@ -21,9 +21,11 @@ static const int MOTOR_H_IN1_PIN = 16;
 static const int MOTOR_H_IN2_PIN = 17;
 
 // Timing for light tracking (ms)
-static const unsigned long READ_INTERVAL_MS_H = 3;
-static const unsigned long ACTION_INTERVAL_MS_H = 120;
-static const unsigned long MOTOR_UPDATE_INTERVAL_MS_H = 30;
+static const unsigned long READ_INTERVAL_MS = 3;
+static const unsigned long ACTION_INTERVAL_MS = 120;
+static const unsigned long MOTOR_UPDATE_INTERVAL_MS = 30;
+static const unsigned long AUTO_BLOCK_DEADBAND_HOLD_MS = 1500;
+static const unsigned long AUTO_BLOCK_DURATION_MS = 10000;
 
 // Diff thresholds (percent). Deadband stops the motor target (0 PWM).
 static const float DIFF_DEADBAND_H = 1.0f;
@@ -47,8 +49,8 @@ static const bool LOG_H_ENABLED = true;
 static const LightSensorPair::Config SENSOR_CFG_H = {
     LDR_H_PIN_A,
     LDR_H_PIN_B,
-    READ_INTERVAL_MS_H,
-    ACTION_INTERVAL_MS_H
+    READ_INTERVAL_MS,
+    ACTION_INTERVAL_MS
 };
 
 // Tracking controller configuration (H)
@@ -68,7 +70,7 @@ static const MotorDriver::Config MOTOR_CFG_H = {
     MOTOR_PWM_CH_IN1_H,
     MOTOR_PWM_CH_IN2_H,
     MOTOR_PWM_SMOOTH_H,
-    MOTOR_UPDATE_INTERVAL_MS_H,
+    MOTOR_UPDATE_INTERVAL_MS,
     MOTOR_PWM_KICK_NORM_H,
     MOTOR_PWM_KICK_MS_H
 };
@@ -82,10 +84,7 @@ static const int LDR_V_PIN_B = LDR_H_PIN_B;
 static const int MOTOR_V_IN1_PIN = -1;
 static const int MOTOR_V_IN2_PIN = -1;
 
-// Timing for light tracking (ms)
-static const unsigned long READ_INTERVAL_MS_V = 25;
-static const unsigned long ACTION_INTERVAL_MS_V = 500;
-static const unsigned long MOTOR_UPDATE_INTERVAL_MS_V = 30;
+// Timing for light tracking uses global values above.
 
 // Diff thresholds (percent). Deadband stops the motor target (0 PWM).
 static const float DIFF_DEADBAND_V = 1.0f;
@@ -109,8 +108,8 @@ static const bool LOG_V_ENABLED = true;
 static const LightSensorPair::Config SENSOR_CFG_V = {
     LDR_V_PIN_A,
     LDR_V_PIN_B,
-    READ_INTERVAL_MS_V,
-    ACTION_INTERVAL_MS_V
+    READ_INTERVAL_MS,
+    ACTION_INTERVAL_MS
 };
 
 // Tracking controller configuration (V)
@@ -130,7 +129,7 @@ static const MotorDriver::Config MOTOR_CFG_V = {
     MOTOR_PWM_CH_IN1_V,
     MOTOR_PWM_CH_IN2_V,
     MOTOR_PWM_SMOOTH_V,
-    MOTOR_UPDATE_INTERVAL_MS_V,
+    MOTOR_UPDATE_INTERVAL_MS,
     MOTOR_PWM_KICK_NORM_V,
     MOTOR_PWM_KICK_MS_V
 };

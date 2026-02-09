@@ -51,6 +51,7 @@ public:
     void clearNewSample() { new_sample_ = false; }
     LightSensorPair::Sample lastSample() const { return last_sample_; }
     float lastTargetNorm() const { return last_target_norm_; }
+    float deadband() const { return cfg_.diff_deadband; }
 
 private:
     Config cfg_;
