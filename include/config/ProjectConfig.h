@@ -135,14 +135,15 @@ static const MotorDriver::Config MOTOR_CFG_V = {
 };
 
 //! ----- Deep sleep config -----
-static const unsigned long SLEEP_INTERVAL_SEC = 7200;
+static const unsigned long SLEEP_INTERVAL_SEC = 30;
 
 //! ----- TFT ST7789 config -----
 static const int TFT_PIN_SCK = 18;
 static const int TFT_PIN_MOSI = 23;
 static const int TFT_PIN_DC = 2;
 static const int TFT_PIN_RST = 4;
-static const int TFT_PIN_BLK = -1;
+static const int TFT_PIN_BLK = 27;
+static const bool TFT_BLK_ACTIVE_HIGH = true;
 static const int TFT_PIN_CS = -1; 
 static const unsigned long TFT_REFRESH_INTERVAL_MS = 100;
 static const float DISPLAY_DEADBAND_PERCENT =
@@ -155,6 +156,7 @@ static const DisplayManager::Config DISPLAY_CFG = {
     TFT_PIN_DC,
     TFT_PIN_RST,
     TFT_PIN_BLK,
+    TFT_BLK_ACTIVE_HIGH,
     TFT_REFRESH_INTERVAL_MS
 };
 

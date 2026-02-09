@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_sleep.h>
+#include <driver/rtc_io.h>
 
 #include "track/TrackingUnit.h"
 #include "sensors/Dht11Sensor.h"
@@ -60,6 +61,26 @@ static void applySystemMode(SystemMode mode) {
     }
 }
 
+static bool isRtcGpio(int pin) {
+    return rtc_gpio_is_valid_gpio((gpio_num_t)pin);
+}
+
+static void releaseBacklightHold() {
+    if (ProjectConfig::TFT_PIN_BLK >= 0 &&
+        isRtcGpio(ProjectConfig::TFT_PIN_BLK)) {
+        rtc_gpio_hold_dis((gpio_num_t)ProjectConfig::TFT_PIN_BLK);
+        gpio_deep_sleep_hold_dis();
+    }
+}
+
+static void holdBacklightForSleep() {
+    if (ProjectConfig::TFT_PIN_BLK >= 0 &&
+        isRtcGpio(ProjectConfig::TFT_PIN_BLK)) {
+        rtc_gpio_hold_en((gpio_num_t)ProjectConfig::TFT_PIN_BLK);
+        gpio_deep_sleep_hold_en();
+    }
+}
+
 static void prepareForSleep(unsigned long now_ms) {
     tracking_unit_h.setMotorOverride(false);
     tracking_unit_v.setMotorOverride(false);
@@ -67,6 +88,7 @@ static void prepareForSleep(unsigned long now_ms) {
     tracking_unit_v.tick(now_ms);
     display.setMode(DisplayManager::Mode::Off);
     display.setBacklight(false);
+    holdBacklightForSleep();
 }
 
 static bool isButtonPressedRaw() {
@@ -95,6 +117,8 @@ void setup() {
     Serial.begin(115200);
     WiFi.mode(WIFI_OFF);
 
+    releaseBacklightHold();
+
     // ESP32 ADC configuration
     analogReadResolution(12);       // Range: 0-4095
     analogSetAttenuation(ADC_11db); // Up to ~3.3 V
@@ -121,6 +145,7 @@ void setup() {
         system_mode = SystemMode::Active;
     }
     applySystemMode(system_mode);
+    display.setActiveIndicator(system_mode == SystemMode::Active);
 
     Serial.println("System initialized");
     Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
@@ -166,6 +191,7 @@ void loop() {
     }
     if (last_mode != system_mode) {
         applySystemMode(system_mode);
+        display.setActiveIndicator(system_mode == SystemMode::Active);
         last_mode = system_mode;
     }
 

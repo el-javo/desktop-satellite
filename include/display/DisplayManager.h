@@ -16,6 +16,7 @@ public:
         int pin_dc;
         int pin_rst;
         int pin_blk;
+        bool blk_active_high;
         unsigned long refresh_interval_ms;
     };
 
@@ -25,7 +26,7 @@ public:
     void begin() {
         if (cfg_.pin_blk >= 0) {
             pinMode(cfg_.pin_blk, OUTPUT);
-            digitalWrite(cfg_.pin_blk, HIGH);
+            setBacklight(true);
         }
 
         tft_.init();
@@ -74,12 +75,18 @@ public:
 
     void setBacklight(bool on) {
         if (cfg_.pin_blk >= 0) {
-            digitalWrite(cfg_.pin_blk, on ? HIGH : LOW);
+            const bool level = cfg_.blk_active_high ? on : !on;
+            digitalWrite(cfg_.pin_blk, level ? HIGH : LOW);
         }
     }
 
     void setBlocked(bool blocked) {
         blocked_ = blocked;
+        dirty_ = true;
+    }
+
+    void setActiveIndicator(bool active) {
+        active_ = active;
         dirty_ = true;
     }
 
@@ -150,9 +157,30 @@ private:
         }
         drawHeader("TRACK");
         drawDiffGaugeCircle(120, 120, 70);
+        drawActiveIndicator(200, 88);
         drawBlockedIndicator(200, 110);
         drawEnvBlock(10, 200);
         force_full_redraw_ = false;
+    }
+
+    void drawActiveIndicator(int x, int y) {
+        if (!force_full_redraw_ && active_ == last_active_) {
+            return;
+        }
+
+        const int size = 18;
+        const uint16_t bg = tft_.color565(20, 20, 20);
+        const uint16_t off_color = tft_.color565(40, 40, 40);
+        const uint16_t on_color = TFT_GREEN;
+
+        tft_.fillRect(x, y, size, size, bg);
+        tft_.drawRect(x, y, size, size, active_ ? on_color : off_color);
+        tft_.setTextDatum(MC_DATUM);
+        tft_.setTextColor(active_ ? on_color : off_color, bg);
+        tft_.drawString("A", x + size / 2, y + size / 2, 1);
+        tft_.setTextDatum(TL_DATUM);
+
+        last_active_ = active_;
     }
 
     void drawBlockedIndicator(int x, int y) {
@@ -298,4 +326,6 @@ private:
     float last_pwm_threshold_percent_ = 9999.0f;
     bool blocked_ = false;
     bool last_blocked_ = false;
+    bool active_ = false;
+    bool last_active_ = false;
 };
