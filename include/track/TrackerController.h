@@ -8,8 +8,7 @@
 class TrackerController {
 public:
     struct Config {
-        float diff_deadband_pos;
-        float diff_deadband_neg;
+        float diff_deadband;
         float diff_pwm_threshold;
         float pwm_min_norm;
         float pwm_max_norm;
@@ -29,8 +28,9 @@ public:
 
         const float diff = sample.diff_percent;
         const float diff_abs = fabsf(diff);
-        const bool move_pos = diff > cfg_.diff_deadband_pos;
-        const bool move_neg = diff < cfg_.diff_deadband_neg;
+        const float db = fabsf(cfg_.diff_deadband);
+        const bool move_pos = diff > db;
+        const bool move_neg = diff < -db;
 
         float target_norm = 0.0f;
         if (move_pos || move_neg) {

@@ -20,13 +20,12 @@ static const int MOTOR_H_IN1_PIN = 16;
 static const int MOTOR_H_IN2_PIN = 17;
 
 // Timing for light tracking (ms)
-static const unsigned long READ_INTERVAL_MS_H = 30;
-static const unsigned long ACTION_INTERVAL_MS_H = 300;
+static const unsigned long READ_INTERVAL_MS_H = 3;
+static const unsigned long ACTION_INTERVAL_MS_H = 120;
 static const unsigned long MOTOR_UPDATE_INTERVAL_MS_H = 30;
 
 // Diff thresholds (percent). Deadband stops the motor target (0 PWM).
-static const float DIFF_DEADBAND_POS_H = 1.0f;
-static const float DIFF_DEADBAND_NEG_H = -1.0f;
+static const float DIFF_DEADBAND_H = 1.0f;
 static const float DIFF_PWM_THRESHOLD_H = 10.0f;
 
 // PWM config (normalized min/max, 0..1)
@@ -53,8 +52,7 @@ static const LightSensorPair::Config SENSOR_CFG_H = {
 
 // Tracking controller configuration (H)
 static const TrackerController::Config TRACKER_CFG_H = {
-    DIFF_DEADBAND_POS_H,
-    DIFF_DEADBAND_NEG_H,
+    DIFF_DEADBAND_H,
     DIFF_PWM_THRESHOLD_H,
     MOTOR_PWM_MIN_NORM_H,
     MOTOR_PWM_MAX_NORM_H
@@ -75,11 +73,11 @@ static const MotorDriver::Config MOTOR_CFG_H = {
 };
 
 //! ----- Tracking V axis (Vertical) -----
-// LDR pins (analog inputs) - not available with current pin budget
-static const int LDR_V_PIN_A = 33;
-static const int LDR_V_PIN_B = 35;
+// LDR pins (analog inputs) - set to H if you want to mirror for testing
+static const int LDR_V_PIN_A = LDR_H_PIN_A;
+static const int LDR_V_PIN_B = LDR_H_PIN_B;
 
-// Motor driver pins (H-bridge inputs) - not available with current pin budget
+// Motor driver pins (H-bridge inputs)
 static const int MOTOR_V_IN1_PIN = -1;
 static const int MOTOR_V_IN2_PIN = -1;
 
@@ -89,8 +87,7 @@ static const unsigned long ACTION_INTERVAL_MS_V = 500;
 static const unsigned long MOTOR_UPDATE_INTERVAL_MS_V = 30;
 
 // Diff thresholds (percent). Deadband stops the motor target (0 PWM).
-static const float DIFF_DEADBAND_POS_V = 1.0f;
-static const float DIFF_DEADBAND_NEG_V = -1.0f;
+static const float DIFF_DEADBAND_V = 1.0f;
 static const float DIFF_PWM_THRESHOLD_V = 10.0f;
 
 // PWM config (normalized min/max, 0..1)
@@ -117,8 +114,7 @@ static const LightSensorPair::Config SENSOR_CFG_V = {
 
 // Tracking controller configuration (V)
 static const TrackerController::Config TRACKER_CFG_V = {
-    DIFF_DEADBAND_POS_V,
-    DIFF_DEADBAND_NEG_V,
+    DIFF_DEADBAND_V,
     DIFF_PWM_THRESHOLD_V,
     MOTOR_PWM_MIN_NORM_V,
     MOTOR_PWM_MAX_NORM_V
@@ -146,6 +142,10 @@ static const int TFT_PIN_RST = 4;
 static const int TFT_PIN_BLK = -1;
 static const int TFT_PIN_CS = -1; 
 static const unsigned long TFT_REFRESH_INTERVAL_MS = 500;
+static const float DISPLAY_DEADBAND_PERCENT =
+    (DIFF_DEADBAND_H > DIFF_DEADBAND_V) ? DIFF_DEADBAND_H : DIFF_DEADBAND_V;
+static const float DISPLAY_PWM_THRESHOLD_PERCENT =
+    (DIFF_PWM_THRESHOLD_H > DIFF_PWM_THRESHOLD_V) ? DIFF_PWM_THRESHOLD_H : DIFF_PWM_THRESHOLD_V;
 
 // Display configuration
 static const DisplayManager::Config DISPLAY_CFG = {

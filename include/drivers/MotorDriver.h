@@ -25,10 +25,16 @@ public:
     void begin() {
         ledcSetup(cfg_.pwm_channel_in1, cfg_.pwm_freq, cfg_.pwm_res_bits);
         ledcSetup(cfg_.pwm_channel_in2, cfg_.pwm_freq, cfg_.pwm_res_bits);
-        ledcAttachPin(cfg_.in1_pin, cfg_.pwm_channel_in1);
-        ledcAttachPin(cfg_.in2_pin, cfg_.pwm_channel_in2);
-        ledcWrite(cfg_.pwm_channel_in1, 0);
-        ledcWrite(cfg_.pwm_channel_in2, 0);
+        if (cfg_.in1_pin >= 0) {
+            ledcAttachPin(cfg_.in1_pin, cfg_.pwm_channel_in1);
+            has_in1_ = true;
+            ledcWrite(cfg_.pwm_channel_in1, 0);
+        }
+        if (cfg_.in2_pin >= 0) {
+            ledcAttachPin(cfg_.in2_pin, cfg_.pwm_channel_in2);
+            has_in2_ = true;
+            ledcWrite(cfg_.pwm_channel_in2, 0);
+        }
     }
 
     void setTargetNormalized(float signed_norm) {
@@ -80,14 +86,26 @@ public:
             (int)lroundf(mag * (float)pwm_range_), 0, (int)pwm_range_);
 
         if (applied_norm > 0.0f) {
-            ledcWrite(cfg_.pwm_channel_in1, last_pwm_raw_);
-            ledcWrite(cfg_.pwm_channel_in2, 0);
+            if (has_in1_) {
+                ledcWrite(cfg_.pwm_channel_in1, last_pwm_raw_);
+            }
+            if (has_in2_) {
+                ledcWrite(cfg_.pwm_channel_in2, 0);
+            }
         } else if (applied_norm < 0.0f) {
-            ledcWrite(cfg_.pwm_channel_in1, 0);
-            ledcWrite(cfg_.pwm_channel_in2, last_pwm_raw_);
+            if (has_in1_) {
+                ledcWrite(cfg_.pwm_channel_in1, 0);
+            }
+            if (has_in2_) {
+                ledcWrite(cfg_.pwm_channel_in2, last_pwm_raw_);
+            }
         } else {
-            ledcWrite(cfg_.pwm_channel_in1, 0);
-            ledcWrite(cfg_.pwm_channel_in2, 0);
+            if (has_in1_) {
+                ledcWrite(cfg_.pwm_channel_in1, 0);
+            }
+            if (has_in2_) {
+                ledcWrite(cfg_.pwm_channel_in2, 0);
+            }
         }
 
         last_applied_norm_ = applied_norm;
@@ -113,4 +131,6 @@ private:
     bool kick_pending_ = false;
     unsigned long kick_active_until_ms_ = 0;
     int last_target_sign_ = 0;
+    bool has_in1_ = false;
+    bool has_in2_ = false;
 };

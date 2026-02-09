@@ -45,7 +45,7 @@ public:
         }
     }
 
-    void setTrackingInfo(float diff_percent) {
+    void setTrackingInfoH(float diff_percent) {
         diff_h_percent_ = diff_percent;
         dirty_ = true;
     }
@@ -56,8 +56,8 @@ public:
         dirty_ = true;
     }
 
-    void setDeadzonePercent(float deadzone_percent) {
-        deadzone_percent_ = deadzone_percent;
+    void setDeadbandPercent(float deadband_percent) {
+        deadband_percent_ = deadband_percent;
         dirty_ = true;
     }
 
@@ -176,7 +176,7 @@ private:
         if (!force_full_redraw_ &&
             diff_h_percent_ == last_diff_h_percent_ &&
             diff_v_percent_ == last_diff_v_percent_ &&
-            deadzone_percent_ == last_deadzone_percent_ &&
+            deadband_percent_ == last_deadband_percent_ &&
             pwm_threshold_percent_ == last_pwm_threshold_percent_) {
             return;
         }
@@ -186,14 +186,14 @@ private:
         const uint16_t dark_red = tft_.color565(60, 0, 0);
 
         const float diff_abs_full = max(fabsf(diff_h_percent_), fabsf(diff_v_percent_));
-        const float dz_for_region = fabsf(deadzone_percent_);
+        const float deadband_for_region = fabsf(deadband_percent_);
         const float pwm_for_region = fabsf(pwm_threshold_percent_);
-        const float dz_th = min(dz_for_region, pwm_for_region);
-        const float pwm_th = max(dz_for_region, pwm_for_region);
+        const float deadband_th = min(deadband_for_region, pwm_for_region);
+        const float pwm_th = max(deadband_for_region, pwm_for_region);
 
         uint16_t region_bg = dark_red;
         uint16_t region_fg = TFT_RED;
-        if (diff_abs_full <= dz_th) {
+        if (diff_abs_full <= deadband_th) {
             region_bg = dark_green;
             region_fg = TFT_GREEN;
         } else if (diff_abs_full <= pwm_th) {
@@ -208,11 +208,11 @@ private:
         const float gauge_max = 35.0f;
         const float gauge_span = gauge_max - gauge_min;
 
-        const int dz_r = (int)((fabsf(deadzone_percent_) / gauge_span) * (2.0f * r));
+        const int deadband_r = (int)((fabsf(deadband_percent_) / gauge_span) * (2.0f * r));
         const int pwm_r = (int)((fabsf(pwm_threshold_percent_) / gauge_span) * (2.0f * r));
 
-        if (dz_r > 0) {
-            tft_.drawCircle(cx, cy, dz_r, TFT_GREEN);
+        if (deadband_r > 0) {
+            tft_.drawCircle(cx, cy, deadband_r, TFT_GREEN);
         }
         if (pwm_r > 0) {
             tft_.drawCircle(cx, cy, pwm_r, TFT_BLUE);
@@ -242,7 +242,7 @@ private:
 
         last_diff_h_percent_ = diff_h_percent_;
         last_diff_v_percent_ = diff_v_percent_;
-        last_deadzone_percent_ = deadzone_percent_;
+        last_deadband_percent_ = deadband_percent_;
         last_pwm_threshold_percent_ = pwm_threshold_percent_;
     }
 
@@ -256,12 +256,12 @@ private:
     float humidity_pct_ = 0.0f;
     float diff_h_percent_ = 0.0f;
     float diff_v_percent_ = 0.0f;
-    float deadzone_percent_ = 1.0f;
+    float deadband_percent_ = 1.0f;
     float pwm_threshold_percent_ = 10.0f;
     float last_temp_c_ = 9999.0f;
     float last_humidity_pct_ = 9999.0f;
     float last_diff_h_percent_ = 9999.0f;
     float last_diff_v_percent_ = 9999.0f;
-    float last_deadzone_percent_ = 9999.0f;
+    float last_deadband_percent_ = 9999.0f;
     float last_pwm_threshold_percent_ = 9999.0f;
 };

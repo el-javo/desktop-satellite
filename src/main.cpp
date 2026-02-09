@@ -6,10 +6,14 @@
 #include "display/DisplayManager.h"
 #include "config/ProjectConfig.h"
 
-TrackingUnit tracker_unit(
+TrackingUnit tracking_unit_h(
     ProjectConfig::SENSOR_CFG_H,
     ProjectConfig::TRACKER_CFG_H,
     ProjectConfig::MOTOR_CFG_H);
+TrackingUnit tracking_unit_v(
+    ProjectConfig::SENSOR_CFG_V,
+    ProjectConfig::TRACKER_CFG_V,
+    ProjectConfig::MOTOR_CFG_V);
 
 Dht11Sensor dht11(ProjectConfig::DHT_CFG);
 DisplayManager display(ProjectConfig::DISPLAY_CFG);
@@ -22,12 +26,13 @@ void setup() {
     analogReadResolution(12);       // Range: 0-4095
     analogSetAttenuation(ADC_11db); // Up to ~3.3 V
 
-    tracker_unit.begin();
+    tracking_unit_h.begin();
+    tracking_unit_v.begin();
     dht11.begin();
     display.begin();
     display.setMode(DisplayManager::Mode::Tracking);
-    display.setDeadzonePercent(ProjectConfig::DIFF_DEADBAND_POS_H);
-    display.setPwmThresholdPercent(ProjectConfig::DIFF_PWM_THRESHOLD_H);
+    display.setDeadbandPercent(ProjectConfig::DISPLAY_DEADBAND_PERCENT);
+    display.setPwmThresholdPercent(ProjectConfig::DISPLAY_PWM_THRESHOLD_PERCENT);
 
     Serial.println("System initialized");
     Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
@@ -35,22 +40,43 @@ void setup() {
 
 void loop() {
     const unsigned long now_ms = millis();
-    tracker_unit.tick(now_ms);
+    tracking_unit_h.tick(now_ms);
+    tracking_unit_v.tick(now_ms);
     dht11.tick(now_ms);
 
-    TrackingUnit::LogSample log;
-    if (tracker_unit.consumeLog(log)) {
-        display.setTrackingInfoHV(log.diff_percent, 0.0f);
+    TrackingUnit::LogSample log_h;
+    static float last_diff_percent_h = 0.0f;
+    static float last_diff_percent_v = 0.0f;
+    if (tracking_unit_h.consumeLog(log_h)) {
+        last_diff_percent_h = log_h.diff_percent;
+        display.setTrackingInfoHV(last_diff_percent_h, last_diff_percent_v);
         if (ProjectConfig::LOG_H_ENABLED) {
-            Serial.print("LDR_A=");
-            Serial.print(log.avg_a);
-            Serial.print(" | LDR_B=");
-            Serial.print(log.avg_b);
-            Serial.print(" | DIFF_AVG=");
-            Serial.print(log.diff_percent, 2);
+            Serial.print("LDR_H_A=");
+            Serial.print(log_h.avg_a);
+            Serial.print(" | LDR_H_B=");
+            Serial.print(log_h.avg_b);
+            Serial.print(" | DIFF_H=");
+            Serial.print(log_h.diff_percent, 2);
             Serial.print(" %");
-            Serial.print(" | PWM=");
-            Serial.println(log.applied_raw);
+            Serial.print(" | PWM_H=");
+            Serial.println(log_h.applied_raw);
+        }
+    }
+
+    TrackingUnit::LogSample log_v;
+    if (tracking_unit_v.consumeLog(log_v)) {
+        last_diff_percent_v = log_v.diff_percent;
+        display.setTrackingInfoHV(last_diff_percent_h, last_diff_percent_v);
+        if (ProjectConfig::LOG_V_ENABLED) {
+            Serial.print("LDR_V_A=");
+            Serial.print(log_v.avg_a);
+            Serial.print(" | LDR_V_B=");
+            Serial.print(log_v.avg_b);
+            Serial.print(" | DIFF_V=");
+            Serial.print(log_v.diff_percent, 2);
+            Serial.print(" %");
+            Serial.print(" | PWM_V=");
+            Serial.println(log_v.applied_raw);
         }
     }
 
