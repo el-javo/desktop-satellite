@@ -40,7 +40,7 @@ void loop() {
 
     TrackingUnit::LogSample log;
     if (tracker_unit.consumeLog(log)) {
-        display.setTrackingInfo(log.diff_percent);
+        display.setTrackingInfoHV(log.diff_percent, 0.0f);
         if (ProjectConfig::LOG_H_ENABLED) {
             Serial.print("LDR_A=");
             Serial.print(log.avg_a);

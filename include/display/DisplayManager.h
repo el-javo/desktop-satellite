@@ -46,7 +46,13 @@ public:
     }
 
     void setTrackingInfo(float diff_percent) {
-        diff_percent_ = diff_percent;
+        diff_h_percent_ = diff_percent;
+        dirty_ = true;
+    }
+
+    void setTrackingInfoHV(float diff_h, float diff_v) {
+        diff_h_percent_ = diff_h;
+        diff_v_percent_ = diff_v;
         dirty_ = true;
     }
 
@@ -132,8 +138,8 @@ private:
             tft_.fillScreen(TFT_BLACK);
         }
         drawHeader("TRACK");
-        drawDiffGauge(10, 70, 220, 40);
-        drawEnvBlock(10, 125);
+        drawDiffGaugeCircle(120, 120, 70);
+        drawEnvBlock(10, 200);
         force_full_redraw_ = false;
     }
 
@@ -146,54 +152,40 @@ private:
 
         const uint16_t dark_env = tft_.color565(0, 25, 0);
         const int box_w = 220;
-        const int box_h = 104;
+        const int box_h = 36;
         tft_.fillRect(x, y, box_w, box_h, dark_env);
         tft_.drawRect(x, y, box_w, box_h, TFT_GREEN);
         tft_.setTextColor(TFT_YELLOW, dark_env);
         tft_.setTextDatum(TL_DATUM);
 
-        // Make this block "dashboard-large" without affecting the rest of the UI.
-        tft_.setTextSize(2);
-        const int use_font = 2;
-        const int pad_x = 10;
+        tft_.setTextSize(1);
+        const int use_font = 1;
+        const int pad_x = 8;
         const int pad_y = 10;
-        const int line_h = tft_.fontHeight(use_font);
 
-        char line1[24];
-        char line2[24];
-        snprintf(line1, sizeof(line1), "T: %.1fC", temp_c_);
-        snprintf(line2, sizeof(line2), "H: %.1f%%", humidity_pct_);
-
-        tft_.drawString(line1, x + pad_x, y + pad_y, use_font);
-        tft_.drawString(line2, x + pad_x, y + pad_y + line_h + 12, use_font);
+        char line[40];
+        snprintf(line, sizeof(line), "T: %.1fC  H: %.1f%%", temp_c_, humidity_pct_);
+        tft_.drawString(line, x + pad_x, y + pad_y, use_font);
 
         tft_.setTextDatum(TL_DATUM);
-        tft_.setTextSize(1);
         last_temp_c_ = temp_c_;
         last_humidity_pct_ = humidity_pct_;
     }
 
-    void drawDiffGauge(int x, int y, int w, int h) {
+    void drawDiffGaugeCircle(int cx, int cy, int r) {
         if (!force_full_redraw_ &&
-            diff_percent_ == last_diff_percent_ &&
+            diff_h_percent_ == last_diff_h_percent_ &&
+            diff_v_percent_ == last_diff_v_percent_ &&
             deadzone_percent_ == last_deadzone_percent_ &&
             pwm_threshold_percent_ == last_pwm_threshold_percent_) {
             return;
         }
 
-        const int inner_x = x + 1;
-        const int inner_y = y + 1;
-        const int inner_w = w - 2;
-        const int inner_h = h - 2;
-        const int center_x = x + w / 2;
-
         const uint16_t dark_green = tft_.color565(0, 40, 0);
         const uint16_t dark_blue = tft_.color565(0, 0, 60);
         const uint16_t dark_red = tft_.color565(60, 0, 0);
 
-        tft_.drawRect(x, y, w, h, TFT_WHITE);
-
-        const float diff_abs_full = fabsf(diff_percent_);
+        const float diff_abs_full = max(fabsf(diff_h_percent_), fabsf(diff_v_percent_));
         const float dz_for_region = fabsf(deadzone_percent_);
         const float pwm_for_region = fabsf(pwm_threshold_percent_);
         const float dz_th = min(dz_for_region, pwm_for_region);
@@ -209,46 +201,47 @@ private:
             region_fg = TFT_BLUE;
         }
 
-        tft_.fillRect(inner_x, inner_y, inner_w, inner_h, region_bg);
-
-        // Diff value label (small), color-coded by current region
-        {
-            char diff_label[24];
-            snprintf(diff_label, sizeof(diff_label), "DIFF: %.1f%%", diff_percent_);
-            const int label_h = 14;
-            const int label_y = y - label_h - 4;
-            if (label_y > 28) { // keep below header
-                tft_.fillRect(x, label_y, w, label_h, TFT_BLACK);
-                tft_.setTextColor(region_fg, TFT_BLACK);
-                tft_.setTextDatum(TL_DATUM);
-                tft_.drawString(diff_label, x, label_y, 1);
-            }
-        }
+        tft_.fillCircle(cx, cy, r, region_bg);
+        tft_.drawCircle(cx, cy, r, TFT_WHITE);
 
         const float gauge_min = -35.0f;
         const float gauge_max = 35.0f;
         const float gauge_span = gauge_max - gauge_min;
 
-        float dz = fabsf(deadzone_percent_);
-        dz = constrain(dz, 0.0f, 100.0f);
-        const int dz_px = (int)((dz / gauge_span) * inner_w);
+        const int dz_r = (int)((fabsf(deadzone_percent_) / gauge_span) * (2.0f * r));
+        const int pwm_r = (int)((fabsf(pwm_threshold_percent_) / gauge_span) * (2.0f * r));
 
-        tft_.drawLine(center_x - dz_px, inner_y, center_x - dz_px, inner_y + inner_h, TFT_GREEN);
-        tft_.drawLine(center_x + dz_px, inner_y, center_x + dz_px, inner_y + inner_h, TFT_GREEN);
+        if (dz_r > 0) {
+            tft_.drawCircle(cx, cy, dz_r, TFT_GREEN);
+        }
+        if (pwm_r > 0) {
+            tft_.drawCircle(cx, cy, pwm_r, TFT_BLUE);
+        }
 
-        float pwm_th_draw = fabsf(pwm_threshold_percent_);
-        pwm_th_draw = constrain(pwm_th_draw, 0.0f, 100.0f);
-        const int pwm_px = (int)((pwm_th_draw / gauge_span) * inner_w);
-        tft_.drawLine(center_x - pwm_px, inner_y, center_x - pwm_px, inner_y + inner_h, TFT_BLUE);
-        tft_.drawLine(center_x + pwm_px, inner_y, center_x + pwm_px, inner_y + inner_h, TFT_BLUE);
+        // Crosshair
+        const uint16_t dark_grey = tft_.color565(40, 40, 40);
+        tft_.drawLine(cx - r, cy, cx + r, cy, dark_grey);
+        tft_.drawLine(cx, cy - r, cx, cy + r, dark_grey);
 
-        float diff = diff_percent_;
-        diff = constrain(diff, gauge_min, gauge_max);
-        const float diff_norm = (diff - gauge_min) / gauge_span;
-        const int marker_x = inner_x + (int)(diff_norm * (inner_w - 1));
-        tft_.drawLine(marker_x, inner_y + 1, marker_x, inner_y + inner_h - 1, TFT_WHITE);
+        // Marker based on H/V diffs
+        float h = constrain(diff_h_percent_, gauge_min, gauge_max);
+        float v = constrain(diff_v_percent_, gauge_min, gauge_max);
+        const float nx = (h - gauge_min) / gauge_span;
+        const float ny = (v - gauge_min) / gauge_span;
+        const int px = cx - r + (int)(nx * (2.0f * r));
+        const int py = cy + r - (int)(ny * (2.0f * r));
+        tft_.fillCircle(px, py, 4, TFT_WHITE);
 
-        last_diff_percent_ = diff_percent_;
+        // Diff label above gauge
+        char diff_label[28];
+        snprintf(diff_label, sizeof(diff_label), "DIFF H/V: %.1f %.1f", diff_h_percent_, diff_v_percent_);
+        tft_.setTextColor(region_fg, TFT_BLACK);
+        tft_.setTextDatum(MC_DATUM);
+        tft_.drawString(diff_label, cx, cy - r - 10, 1);
+        tft_.setTextDatum(TL_DATUM);
+
+        last_diff_h_percent_ = diff_h_percent_;
+        last_diff_v_percent_ = diff_v_percent_;
         last_deadzone_percent_ = deadzone_percent_;
         last_pwm_threshold_percent_ = pwm_threshold_percent_;
     }
@@ -261,12 +254,14 @@ private:
     unsigned long last_draw_ms_ = 0;
     float temp_c_ = 0.0f;
     float humidity_pct_ = 0.0f;
-    float diff_percent_ = 0.0f;
+    float diff_h_percent_ = 0.0f;
+    float diff_v_percent_ = 0.0f;
     float deadzone_percent_ = 1.0f;
     float pwm_threshold_percent_ = 10.0f;
     float last_temp_c_ = 9999.0f;
     float last_humidity_pct_ = 9999.0f;
-    float last_diff_percent_ = 9999.0f;
+    float last_diff_h_percent_ = 9999.0f;
+    float last_diff_v_percent_ = 9999.0f;
     float last_deadzone_percent_ = 9999.0f;
     float last_pwm_threshold_percent_ = 9999.0f;
 };
