@@ -17,6 +17,7 @@
 // SPI pins
 #define TFT_MOSI 23
 #define TFT_SCLK 18
+#define TFT_MISO -1
 
 // Control pins
 #define TFT_DC   2
