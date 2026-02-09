@@ -34,9 +34,11 @@ static const int MOTOR_PWM_FREQ_H = 20000;
 static const int MOTOR_PWM_RES_BITS_H = 8;
 static const int MOTOR_PWM_CH_IN1_H = 0;
 static const int MOTOR_PWM_CH_IN2_H = 1;
-static const float MOTOR_PWM_MIN_NORM_H = 0.3f; // 0..1
-static const float MOTOR_PWM_MAX_NORM_H = 0.9f; // 0..1
+static const float MOTOR_PWM_MIN_NORM_H = 0.45f; // 0..1
+static const float MOTOR_PWM_MAX_NORM_H = 0.5f; // 0..1
 static const float MOTOR_PWM_SMOOTH_H = 0.7f;   // 0..1 (0 = instant, 1 = very smooth)
+static const float MOTOR_PWM_KICK_NORM_H = 0.8f; // 0..1
+static const unsigned long MOTOR_PWM_KICK_MS_H = 200;
 
 // Logging toggle for H tracking
 static const bool LOG_H_ENABLED = true;
@@ -67,13 +69,15 @@ static const MotorDriver::Config MOTOR_CFG_H = {
     MOTOR_PWM_CH_IN1_H,
     MOTOR_PWM_CH_IN2_H,
     MOTOR_PWM_SMOOTH_H,
-    MOTOR_UPDATE_INTERVAL_MS_H
+    MOTOR_UPDATE_INTERVAL_MS_H,
+    MOTOR_PWM_KICK_NORM_H,
+    MOTOR_PWM_KICK_MS_H
 };
 
 //! ----- Tracking V axis (Vertical) -----
 // LDR pins (analog inputs) - not available with current pin budget
-static const int LDR_V_PIN_A = -1;
-static const int LDR_V_PIN_B = -1;
+static const int LDR_V_PIN_A = 33;
+static const int LDR_V_PIN_B = 35;
 
 // Motor driver pins (H-bridge inputs) - not available with current pin budget
 static const int MOTOR_V_IN1_PIN = -1;
@@ -94,9 +98,11 @@ static const int MOTOR_PWM_FREQ_V = 20000;
 static const int MOTOR_PWM_RES_BITS_V = 8;
 static const int MOTOR_PWM_CH_IN1_V = 2;
 static const int MOTOR_PWM_CH_IN2_V = 3;
-static const float MOTOR_PWM_MIN_NORM_V = 0.3f; // 0..1
-static const float MOTOR_PWM_MAX_NORM_V = 0.9f; // 0..1
+static const float MOTOR_PWM_MIN_NORM_V = 0.45f; // 0..1
+static const float MOTOR_PWM_MAX_NORM_V = 0.5f; // 0..1
 static const float MOTOR_PWM_SMOOTH_V = 0.7f;   // 0..1 (0 = instant, 1 = very smooth)
+static const float MOTOR_PWM_KICK_NORM_V = 0.8f; // 0..1
+static const unsigned long MOTOR_PWM_KICK_MS_V = 200;
 
 // Logging toggle for V tracking
 static const bool LOG_V_ENABLED = true;
@@ -127,7 +133,9 @@ static const MotorDriver::Config MOTOR_CFG_V = {
     MOTOR_PWM_CH_IN1_V,
     MOTOR_PWM_CH_IN2_V,
     MOTOR_PWM_SMOOTH_V,
-    MOTOR_UPDATE_INTERVAL_MS_V
+    MOTOR_UPDATE_INTERVAL_MS_V,
+    MOTOR_PWM_KICK_NORM_V,
+    MOTOR_PWM_KICK_MS_V
 };
 
 //! ----- TFT ST7789 config -----
