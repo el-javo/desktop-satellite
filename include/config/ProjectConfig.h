@@ -29,7 +29,7 @@ static const unsigned long AUTO_BLOCK_DURATION_MS = 10000;
 
 // Diff thresholds (percent). Deadband stops the motor target (0 PWM).
 static const float DIFF_DEADBAND_H = 1.0f;
-static const float DIFF_PWM_THRESHOLD_H = 10.0f;
+static const float DIFF_PWM_THRESHOLD_H = 15.0f;
 
 // PWM config (normalized min/max, 0..1)
 static const int MOTOR_PWM_FREQ_H = 20000;

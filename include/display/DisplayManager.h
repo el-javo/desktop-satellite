@@ -283,14 +283,21 @@ private:
         tft_.drawLine(cx - r, cy, cx + r, cy, dark_grey);
         tft_.drawLine(cx, cy - r, cx, cy + r, dark_grey);
 
-        // Marker based on H/V diffs
-        float h = constrain(diff_h_percent_, gauge_min, gauge_max);
-        float v = constrain(diff_v_percent_, gauge_min, gauge_max);
-        const float nx = (h - gauge_min) / gauge_span;
-        const float ny = (v - gauge_min) / gauge_span;
-        const int px = cx - r + (int)(nx * (2.0f * r));
-        const int py = cy + r - (int)(ny * (2.0f * r));
-        tft_.fillCircle(px, py, 4, TFT_WHITE);
+        // Marker based on H/V diffs, clamped to circle
+        float h_norm = diff_h_percent_ / gauge_max;
+        float v_norm = diff_v_percent_ / gauge_max;
+        h_norm = constrain(h_norm, -1.0f, 1.0f);
+        v_norm = constrain(v_norm, -1.0f, 1.0f);
+        const float len = sqrtf((h_norm * h_norm) + (v_norm * v_norm));
+        const float scale = (len > 1.0f) ? (1.0f / len) : 1.0f;
+        const int px = cx + (int)(h_norm * scale * (float)r);
+        const int py = cy - (int)(v_norm * scale * (float)r);
+        const bool saturated = len > 1.0f;
+        const bool in_deadband = diff_abs_full <= deadband_th;
+        const uint16_t dot_color = in_deadband
+            ? TFT_GREEN
+            : (saturated ? TFT_RED : TFT_WHITE);
+        tft_.fillCircle(px, py, 4, dot_color);
 
         // Diff label above gauge
         char diff_label[28];
