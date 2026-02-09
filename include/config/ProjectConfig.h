@@ -145,7 +145,7 @@ static const int TFT_PIN_RST = 4;
 static const int TFT_PIN_BLK = 27;
 static const bool TFT_BLK_ACTIVE_HIGH = true;
 static const int TFT_PIN_CS = -1; 
-static const unsigned long TFT_REFRESH_INTERVAL_MS = 100;
+static const unsigned long TFT_REFRESH_INTERVAL_MS = 30;
 static const float DISPLAY_DEADBAND_PERCENT =
     (DIFF_DEADBAND_H > DIFF_DEADBAND_V) ? DIFF_DEADBAND_H : DIFF_DEADBAND_V;
 static const float DISPLAY_PWM_THRESHOLD_PERCENT =
@@ -159,6 +159,9 @@ static const DisplayManager::Config DISPLAY_CFG = {
     TFT_BLK_ACTIVE_HIGH,
     TFT_REFRESH_INTERVAL_MS
 };
+
+// Battery (mock for now)
+static const float BATTERY_PERCENT_MOCK = 80.0f;
 
 //! ----- DHT11 config -----
 static const int DHT11_PIN = 21;

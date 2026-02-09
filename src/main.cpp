@@ -137,6 +137,7 @@ void setup() {
     display.setMode(DisplayManager::Mode::Tracking);
     display.setDeadbandPercent(ProjectConfig::DISPLAY_DEADBAND_PERCENT);
     display.setPwmThresholdPercent(ProjectConfig::DISPLAY_PWM_THRESHOLD_PERCENT);
+    display.setBatteryPercent(ProjectConfig::BATTERY_PERCENT_MOCK);
     esp_sleep_wakeup_cause_t wake = esp_sleep_get_wakeup_cause();
     if (wake == ESP_SLEEP_WAKEUP_TIMER) {
         system_mode = SystemMode::DeepSleep;

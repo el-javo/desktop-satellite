@@ -73,6 +73,11 @@ public:
         dirty_ = true;
     }
 
+    void setBatteryPercent(float percent) {
+        battery_percent_ = constrain(percent, 0.0f, 100.0f);
+        dirty_ = true;
+    }
+
     void setBacklight(bool on) {
         if (cfg_.pin_blk >= 0) {
             const bool level = cfg_.blk_active_high ? on : !on;
@@ -127,14 +132,14 @@ private:
         if (force_full_redraw_) {
             tft_.fillScreen(TFT_BLACK);
         }
-        drawHeader("OFF");
+        // No header
     }
 
     void drawConnecting() {
         if (force_full_redraw_) {
             tft_.fillScreen(TFT_BLACK);
         }
-        drawHeader("CONNECT");
+        // No header
         tft_.setTextColor(TFT_YELLOW, TFT_BLACK);
         tft_.setTextSize(2);
         tft_.setCursor(20, 80);
@@ -146,7 +151,7 @@ private:
         if (force_full_redraw_) {
             tft_.fillScreen(TFT_BLACK);
         }
-        drawHeader("DASH");
+        // No header
         drawEnvBlock(10, 40);
         force_full_redraw_ = false;
     }
@@ -155,12 +160,57 @@ private:
         if (force_full_redraw_) {
             tft_.fillScreen(TFT_BLACK);
         }
-        drawHeader("TRACK");
+        drawBatteryIndicator(20, 6, 200, 12);
         drawDiffGaugeCircle(120, 120, 70);
         drawActiveIndicator(200, 88);
         drawBlockedIndicator(200, 110);
         drawEnvBlock(10, 200);
         force_full_redraw_ = false;
+    }
+
+    void drawBatteryIndicator(int x, int y, int w, int h) {
+        if (!force_full_redraw_ && battery_percent_ == last_battery_percent_) {
+            return;
+        }
+
+        const uint16_t bg = TFT_BLACK;
+        const uint16_t frame = tft_.color565(210, 220, 220);
+        const uint16_t off = tft_.color565(30, 30, 30);
+
+        uint16_t fill = tft_.color565(255, 60, 60);
+        if (battery_percent_ >= 70.0f) {
+            fill = tft_.color565(0, 220, 120);
+        } else if (battery_percent_ >= 25.0f) {
+            fill = tft_.color565(230, 200, 60);
+        }
+
+        tft_.fillRect(x, y, w, h, bg);
+
+        const int segments = 20;
+        const int gap = 1;
+        const int inner_w = w - 2;
+        const int inner_h = h - 2;
+        const int pad_y = 1;
+        const int total_gap = (segments - 1) * gap;
+        const int seg_w = (inner_w - total_gap) / segments;
+        const int total_w = (seg_w * segments) + total_gap;
+        const int frame_w = total_w + 2;
+        const int frame_x = x + ((w - frame_w) / 2);
+
+        tft_.drawRect(frame_x, y, frame_w, h, frame);
+        int filled = (int)floorf((battery_percent_ / 100.0f) * (float)segments);
+        filled = constrain(filled, 0, segments);
+
+        int sx = frame_x + 1;
+        const int sy = y + 1 + pad_y;
+        const int seg_h = inner_h - (2 * pad_y);
+        for (int i = 0; i < segments; ++i) {
+            const uint16_t color = (i < filled) ? fill : off;
+            tft_.fillRect(sx, sy, seg_w, seg_h, color);
+            sx += seg_w + gap;
+        }
+
+        last_battery_percent_ = battery_percent_;
     }
 
     void drawActiveIndicator(int x, int y) {
@@ -210,18 +260,16 @@ private:
             return;
         }
 
-        const uint16_t dark_env = tft_.color565(0, 25, 0);
         const int box_w = 220;
         const int box_h = 36;
-        tft_.fillRect(x, y, box_w, box_h, dark_env);
-        tft_.drawRect(x, y, box_w, box_h, TFT_GREEN);
-        tft_.setTextColor(TFT_YELLOW, dark_env);
+        tft_.fillRect(x, y, box_w, box_h, TFT_BLACK);
+        tft_.setTextColor(TFT_WHITE, TFT_BLACK);
         tft_.setTextDatum(TL_DATUM);
 
         tft_.setTextSize(1);
-        const int use_font = 1;
+        const int use_font = 2;
         const int pad_x = 8;
-        const int pad_y = 10;
+        const int pad_y = 8;
 
         char line[40];
         snprintf(line, sizeof(line), "T: %.1fC  H: %.1f%%", temp_c_, humidity_pct_);
@@ -335,4 +383,6 @@ private:
     bool last_blocked_ = false;
     bool active_ = false;
     bool last_active_ = false;
+    float battery_percent_ = 60.0f;
+    float last_battery_percent_ = -1.0f;
 };
