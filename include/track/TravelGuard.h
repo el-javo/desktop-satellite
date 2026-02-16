@@ -34,19 +34,25 @@ public:
     }
 
     void tick(unsigned long now_ms) {
-        updateSwitch(limit_1_, readPressedRaw(cfg_.limit_pin_1), now_ms);
-        updateSwitch(limit_2_, readPressedRaw(cfg_.limit_pin_2), now_ms);
+        const bool raw_1 = readPressedRaw(cfg_.limit_pin_1);
+        const bool raw_2 = readPressedRaw(cfg_.limit_pin_2);
+        updateSwitch(limit_1_, raw_1, now_ms);
+        updateSwitch(limit_2_, raw_2, now_ms);
+
+        const bool edge_1 = consumePressedEdge(limit_1_);
+        const bool edge_2 = consumePressedEdge(limit_2_);
 
         if (state_ == SweepState::Idle) {
-            if (consumePressedEdge(limit_1_)) {
+            if (edge_1) {
                 state_ = SweepState::ToLimit2;
-            } else if (consumePressedEdge(limit_2_)) {
+            } else if (edge_2) {
                 state_ = SweepState::ToLimit1;
             }
             return;
         }
 
         if (state_ == SweepState::ToLimit2) {
+            // Stop sweep only when destination limit is stable (debounced).
             if (limit_2_.stable) {
                 state_ = SweepState::Idle;
             }
@@ -54,6 +60,7 @@ public:
         }
 
         if (state_ == SweepState::ToLimit1) {
+            // Stop sweep only when destination limit is stable (debounced).
             if (limit_1_.stable) {
                 state_ = SweepState::Idle;
             }

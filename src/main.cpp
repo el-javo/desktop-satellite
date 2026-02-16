@@ -285,6 +285,8 @@ void loop() {
         static bool last_sweep = false;
         static bool last_limit_1 = false;
         static bool last_limit_2 = false;
+        static int last_raw_1 = -1;
+        static int last_raw_2 = -1;
 
         const int raw_1 = digitalRead(ProjectConfig::TRAVEL_GUARD_PIN_1);
         const int raw_2 = digitalRead(ProjectConfig::TRAVEL_GUARD_PIN_2);
@@ -293,7 +295,9 @@ void loop() {
         const bool changed =
             (last_sweep != travel_sweep_active) ||
             (last_limit_1 != limit_1) ||
-            (last_limit_2 != limit_2);
+            (last_limit_2 != limit_2) ||
+            (last_raw_1 != raw_1) ||
+            (last_raw_2 != raw_2);
 
         if (changed || (now_ms - last_dbg_ms) >= 250) {
             Serial.print("[DBG] TG raw=");
@@ -319,6 +323,8 @@ void loop() {
             last_sweep = travel_sweep_active;
             last_limit_1 = limit_1;
             last_limit_2 = limit_2;
+            last_raw_1 = raw_1;
+            last_raw_2 = raw_2;
         }
     }
 

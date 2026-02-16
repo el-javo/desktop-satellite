@@ -220,7 +220,7 @@ static const TouchButton::Config TOUCH_BUTTON_CFG = {
 
 //! ----- Travel guard (NC endstops) -----
 // NC switches with pull-up: pressed/open circuit -> HIGH on input.
-static const int TRAVEL_GUARD_PIN_1 = 19;
+static const int TRAVEL_GUARD_PIN_1 = 5;
 static const int TRAVEL_GUARD_PIN_2 = 22;
 static const bool TRAVEL_GUARD_ACTIVE_HIGH = true;
 static const bool TRAVEL_GUARD_USE_PULLUP = true;
