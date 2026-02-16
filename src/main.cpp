@@ -17,6 +17,19 @@ enum class SystemMode {
     DeepSleep
 };
 
+static const char* systemModeName(SystemMode mode) {
+    switch (mode) {
+    case SystemMode::Active:
+        return "ACTIVE";
+    case SystemMode::ActiveBlocked:
+        return "ACTIVE_BLOCKED";
+    case SystemMode::DeepSleep:
+        return "DEEPSLEEP";
+    default:
+        return "?";
+    }
+}
+
 TrackingUnit tracking_unit_h(
     ProjectConfig::SENSOR_CFG_H,
     ProjectConfig::TRACKER_CFG_H,
@@ -114,6 +127,30 @@ static void enterDeepSleep() {
 }
 
 void setup() {
+    Serial.begin(115200);
+    delay(100);
+    Serial.println("[DBG] Boot");
+    Serial.print("[DBG] TravelGuard pins: ");
+    Serial.print(ProjectConfig::TRAVEL_GUARD_PIN_1);
+    Serial.print(", ");
+    Serial.print(ProjectConfig::TRAVEL_GUARD_PIN_2);
+    Serial.print(" | active_high=");
+    Serial.print(ProjectConfig::TRAVEL_GUARD_ACTIVE_HIGH ? 1 : 0);
+    Serial.print(" | pullup=");
+    Serial.println(ProjectConfig::TRAVEL_GUARD_USE_PULLUP ? 1 : 0);
+    Serial.print("[DBG] Motor V pins: ");
+    Serial.print(ProjectConfig::MOTOR_V_IN1_PIN);
+    Serial.print(", ");
+    Serial.print(ProjectConfig::MOTOR_V_IN2_PIN);
+    Serial.print(" | smooth=");
+    Serial.println(ProjectConfig::MOTOR_PWM_SMOOTH_V, 3);
+    if (ProjectConfig::MOTOR_V_IN1_PIN < 0 || ProjectConfig::MOTOR_V_IN2_PIN < 0) {
+        Serial.println("[DBG][WARN] Motor V disabled in config (pin < 0)");
+    }
+    if (ProjectConfig::MOTOR_PWM_SMOOTH_V >= 0.999f) {
+        Serial.println("[DBG][WARN] Motor V smooth ~1.0 => filtered PWM may stay near 0");
+    }
+
     WiFi.mode(WIFI_OFF);
 
     releaseBacklightHold();
@@ -155,8 +192,11 @@ void loop() {
     touch_button.tick(now_ms);
     travel_guard.tick(now_ms);
     const bool travel_sweep_active = travel_guard.isSweepActive();
+    const float travel_target_norm = travel_sweep_active
+        ? travel_guard.sweepTargetNorm()
+        : 0.0f;
     if (travel_sweep_active) {
-        tracking_unit_v.setTargetOverride(travel_guard.sweepTargetNorm());
+        tracking_unit_v.setTargetOverride(travel_target_norm);
     } else {
         tracking_unit_v.clearTargetOverride();
     }
@@ -186,6 +226,8 @@ void loop() {
     if (last_mode != system_mode) {
         applySystemMode(system_mode);
         display.setActiveIndicator(system_mode == SystemMode::Active);
+        Serial.print("[DBG] Mode -> ");
+        Serial.println(systemModeName(system_mode));
         last_mode = system_mode;
     }
 
@@ -225,6 +267,48 @@ void loop() {
         display.setTrackingRawV(log_v.avg_a, log_v.avg_b);
         display.setTrackingInfoHV(last_diff_percent_h, last_diff_percent_v);
         display.setMotorPwmHV(last_pwm_norm_h, last_pwm_norm_v);
+    }
+
+    {
+        static unsigned long last_dbg_ms = 0;
+        static bool last_sweep = false;
+        static bool last_limit_1 = false;
+        static bool last_limit_2 = false;
+
+        const int raw_1 = digitalRead(ProjectConfig::TRAVEL_GUARD_PIN_1);
+        const int raw_2 = digitalRead(ProjectConfig::TRAVEL_GUARD_PIN_2);
+        const bool limit_1 = travel_guard.isLimit1Pressed();
+        const bool limit_2 = travel_guard.isLimit2Pressed();
+        const bool changed =
+            (last_sweep != travel_sweep_active) ||
+            (last_limit_1 != limit_1) ||
+            (last_limit_2 != limit_2);
+
+        if (changed || (now_ms - last_dbg_ms) >= 250) {
+            Serial.print("[DBG] TG raw=");
+            Serial.print(raw_1);
+            Serial.print(",");
+            Serial.print(raw_2);
+            Serial.print(" press=");
+            Serial.print(limit_1 ? 1 : 0);
+            Serial.print(",");
+            Serial.print(limit_2 ? 1 : 0);
+            Serial.print(" sweep=");
+            Serial.print(travel_sweep_active ? 1 : 0);
+            Serial.print(" tgt=");
+            Serial.print(travel_target_norm, 3);
+            Serial.print(" mode=");
+            Serial.print(systemModeName(system_mode));
+            Serial.print(" v_en=");
+            Serial.print(tracking_unit_v.isMotorEnabled() ? 1 : 0);
+            Serial.print(" pwmV=");
+            Serial.println(last_pwm_norm_v, 3);
+
+            last_dbg_ms = now_ms;
+            last_sweep = travel_sweep_active;
+            last_limit_1 = limit_1;
+            last_limit_2 = limit_2;
+        }
     }
 
     Dht11Sensor::Sample dht_log;

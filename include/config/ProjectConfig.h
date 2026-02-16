@@ -39,7 +39,7 @@ static const int MOTOR_PWM_CH_IN1_H = 0;
 static const int MOTOR_PWM_CH_IN2_H = 1;
 static const float MOTOR_PWM_MIN_NORM_H = 0.8f; // 0..1
 static const float MOTOR_PWM_MAX_NORM_H = 0.99f; // 0..1
-static const float MOTOR_PWM_SMOOTH_H = 0.0f;   // 0..1 (0 = instant, 1 = very smooth)
+static const float MOTOR_PWM_SMOOTH_H = 0.8f;   // 0..1 (0 = instant, 1 = very smooth)
 static const float MOTOR_PWM_KICK_NORM_H = 0.8f; // 0..1
 static const unsigned long MOTOR_PWM_KICK_MS_H = 200;
 
@@ -98,7 +98,7 @@ static const int MOTOR_PWM_CH_IN1_V = 2;
 static const int MOTOR_PWM_CH_IN2_V = 3;
 static const float MOTOR_PWM_MIN_NORM_V = 0.8f; // 0..1
 static const float MOTOR_PWM_MAX_NORM_V = 0.99f; // 0..1
-static const float MOTOR_PWM_SMOOTH_V = 1.0f;   // 0..1 (0 = instant, 1 = very smooth)
+static const float MOTOR_PWM_SMOOTH_V = 0.8f;   // 0..1 (0 = instant, 1 = very smooth)
 static const float MOTOR_PWM_KICK_NORM_V = 0.8f; // 0..1
 static const unsigned long MOTOR_PWM_KICK_MS_V = 200;
 

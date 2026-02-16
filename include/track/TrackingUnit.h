@@ -72,7 +72,7 @@ public:
         out.avg_b = s.avg_b;
         out.diff_percent = s.diff_percent;
         out.target_norm = tracker_.lastTargetNorm();
-        out.applied_norm = motor_.getFilteredNorm();
+        out.applied_norm = motor_.getAppliedNorm();
         out.applied_raw = motor_.getAppliedPwmRaw();
         tracker_.clearNewSample();
         return true;
