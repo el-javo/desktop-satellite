@@ -62,6 +62,7 @@ public:
     bool isMotorEnabled() const { return motor_enabled_last_; }
     bool hasDiffSample() const { return has_diff_; }
     float lastDiffPercent() const { return last_diff_percent_; }
+    float lastEffectiveDeadband() const { return tracker_.lastEffectiveDeadband(); }
 
     bool consumeLog(LogSample& out) {
         if (!tracker_.hasNewSample()) {

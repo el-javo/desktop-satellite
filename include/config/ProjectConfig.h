@@ -32,6 +32,15 @@ static const unsigned long AUTO_BLOCK_DURATION_MS = 10000;
 static const float DIFF_DEADBAND_H = 1.0f;
 static const float DIFF_PWM_THRESHOLD_H = 15.0f;
 
+// Low-light adaptive deadband (percent, based on max(avg_a, avg_b) ADC counts):
+// <500 => 5%, <200 => 20%, <100 => 100%.
+static const uint32_t LOW_LIGHT_LEVEL_1 = 500;
+static const float LOW_LIGHT_DEADBAND_1_PERCENT = 5.0f;
+static const uint32_t LOW_LIGHT_LEVEL_2 = 200;
+static const float LOW_LIGHT_DEADBAND_2_PERCENT = 20.0f;
+static const uint32_t LOW_LIGHT_LEVEL_3 = 100;
+static const float LOW_LIGHT_DEADBAND_3_PERCENT = 100.0f;
+
 // PWM config (normalized min/max, 0..1)
 static const int MOTOR_PWM_FREQ_H = 20000;
 static const int MOTOR_PWM_RES_BITS_H = 8;
@@ -59,7 +68,13 @@ static const TrackerController::Config TRACKER_CFG_H = {
     DIFF_DEADBAND_H,
     DIFF_PWM_THRESHOLD_H,
     MOTOR_PWM_MIN_NORM_H,
-    MOTOR_PWM_MAX_NORM_H
+    MOTOR_PWM_MAX_NORM_H,
+    LOW_LIGHT_LEVEL_1,
+    LOW_LIGHT_DEADBAND_1_PERCENT,
+    LOW_LIGHT_LEVEL_2,
+    LOW_LIGHT_DEADBAND_2_PERCENT,
+    LOW_LIGHT_LEVEL_3,
+    LOW_LIGHT_DEADBAND_3_PERCENT
 };
 
 // Motor driver configuration (H)
@@ -118,7 +133,13 @@ static const TrackerController::Config TRACKER_CFG_V = {
     DIFF_DEADBAND_V,
     DIFF_PWM_THRESHOLD_V,
     MOTOR_PWM_MIN_NORM_V,
-    MOTOR_PWM_MAX_NORM_V
+    MOTOR_PWM_MAX_NORM_V,
+    LOW_LIGHT_LEVEL_1,
+    LOW_LIGHT_DEADBAND_1_PERCENT,
+    LOW_LIGHT_LEVEL_2,
+    LOW_LIGHT_DEADBAND_2_PERCENT,
+    LOW_LIGHT_LEVEL_3,
+    LOW_LIGHT_DEADBAND_3_PERCENT
 };
 
 // Motor driver configuration (V)

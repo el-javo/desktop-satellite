@@ -7,8 +7,6 @@
 class TrackingCoordinator {
 public:
     struct Config {
-        float deadband_h;
-        float deadband_v;
         unsigned long deadband_hold_ms;
         unsigned long block_duration_ms;
     };
@@ -49,8 +47,8 @@ public:
 
         const float diff_h_abs = fabsf(unit_h_.lastDiffPercent());
         const float diff_v_abs = fabsf(unit_v_.lastDiffPercent());
-        const float db_h = fabsf(cfg_.deadband_h);
-        const float db_v = fabsf(cfg_.deadband_v);
+        const float db_h = fabsf(unit_h_.lastEffectiveDeadband());
+        const float db_v = fabsf(unit_v_.lastEffectiveDeadband());
         in_deadband_ = (diff_h_abs <= db_h) && (diff_v_abs <= db_v);
 
         const bool is_blocked_window = now_ms < block_until_ms_;
@@ -110,4 +108,3 @@ private:
     unsigned long deadband_enter_ms_ = 0;
     unsigned long block_until_ms_ = 0;
 };
-

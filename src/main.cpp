@@ -40,8 +40,6 @@ TrackingUnit tracking_unit_v(
     ProjectConfig::MOTOR_CFG_V);
 TrackingCoordinator tracking_coordinator(
     {
-        ProjectConfig::DIFF_DEADBAND_H,
-        ProjectConfig::DIFF_DEADBAND_V,
         ProjectConfig::AUTO_BLOCK_DEADBAND_HOLD_MS,
         ProjectConfig::AUTO_BLOCK_DURATION_MS
     },
@@ -244,6 +242,19 @@ void loop() {
     tracking_unit_h.tick(now_ms);
     tracking_unit_v.tick(now_ms);
     dht11.tick(now_ms);
+    {
+        static float last_display_deadband = -1.0f;
+        if (tracking_unit_h.hasDiffSample() && tracking_unit_v.hasDiffSample()) {
+            const float display_deadband = max(
+                tracking_unit_h.lastEffectiveDeadband(),
+                tracking_unit_v.lastEffectiveDeadband());
+            if (display_deadband >= 0.0f &&
+                fabsf(display_deadband - last_display_deadband) > 0.0005f) {
+                display.setDeadbandPercent(display_deadband);
+                last_display_deadband = display_deadband;
+            }
+        }
+    }
     display.setBlocked(
         !(tracking_unit_h.isMotorEnabled() && tracking_unit_v.isMotorEnabled()));
 
@@ -320,10 +331,12 @@ void loop() {
         if (!(have_diff_h && have_diff_v)) {
             deep_sleep_deadband_ms = 0;
         } else {
+            const float db_h = fabsf(tracking_unit_h.lastEffectiveDeadband());
+            const float db_v = fabsf(tracking_unit_v.lastEffectiveDeadband());
             const bool in_deadband_h =
-                fabsf(last_diff_percent_h) <= ProjectConfig::DIFF_DEADBAND_H;
+                fabsf(last_diff_percent_h) <= db_h;
             const bool in_deadband_v =
-                fabsf(last_diff_percent_v) <= ProjectConfig::DIFF_DEADBAND_V;
+                fabsf(last_diff_percent_v) <= db_v;
             const bool in_deadband = in_deadband_h && in_deadband_v;
 
             if (in_deadband) {
