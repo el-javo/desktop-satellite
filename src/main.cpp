@@ -5,6 +5,7 @@
 
 #include "track/TrackingUnit.h"
 #include "track/TrackingCoordinator.h"
+#include "track/TravelGuard.h"
 #include "sensors/Dht11Sensor.h"
 #include "sensors/TouchButton.h"
 #include "display/DisplayManager.h"
@@ -33,6 +34,7 @@ TrackingCoordinator tracking_coordinator(
     },
     tracking_unit_h,
     tracking_unit_v);
+TravelGuard travel_guard(ProjectConfig::TRAVEL_GUARD_CFG);
 
 Dht11Sensor dht11(ProjectConfig::DHT_CFG);
 TouchButton touch_button(ProjectConfig::TOUCH_BUTTON_CFG);
@@ -81,6 +83,7 @@ static void holdBacklightForSleep() {
 static void prepareForSleep(unsigned long now_ms) {
     tracking_unit_h.setMotorOverride(false);
     tracking_unit_v.setMotorOverride(false);
+    tracking_unit_v.clearTargetOverride();
     tracking_unit_h.tick(now_ms);
     tracking_unit_v.tick(now_ms);
     display.setMode(DisplayManager::Mode::Off);
@@ -121,6 +124,7 @@ void setup() {
 
     tracking_unit_h.begin();
     tracking_unit_v.begin();
+    travel_guard.begin();
     dht11.begin();
     touch_button.begin();
     display.begin();
@@ -149,6 +153,13 @@ void setup() {
 void loop() {
     const unsigned long now_ms = millis();
     touch_button.tick(now_ms);
+    travel_guard.tick(now_ms);
+    const bool travel_sweep_active = travel_guard.isSweepActive();
+    if (travel_sweep_active) {
+        tracking_unit_v.setTargetOverride(travel_guard.sweepTargetNorm());
+    } else {
+        tracking_unit_v.clearTargetOverride();
+    }
     static SystemMode last_mode = system_mode;
     static unsigned long deep_sleep_deadband_ms = 0;
     static bool have_diff_h = false;
@@ -178,15 +189,21 @@ void loop() {
         last_mode = system_mode;
     }
 
-    tracking_unit_h.tick(now_ms);
-    tracking_unit_v.tick(now_ms);
     if (system_mode == SystemMode::Active) {
         tracking_coordinator.tick(now_ms);
     }
+    if (travel_sweep_active) {
+        tracking_unit_v.setMotorOverride(true);
+    } else if (system_mode == SystemMode::ActiveBlocked) {
+        tracking_unit_v.setMotorOverride(false);
+    } else if (system_mode == SystemMode::DeepSleep) {
+        tracking_unit_v.clearMotorOverride();
+    }
+    tracking_unit_h.tick(now_ms);
+    tracking_unit_v.tick(now_ms);
     dht11.tick(now_ms);
     display.setBlocked(
-        (system_mode == SystemMode::ActiveBlocked) ||
-        (system_mode == SystemMode::Active && tracking_coordinator.isBlocked()));
+        !(tracking_unit_h.isMotorEnabled() && tracking_unit_v.isMotorEnabled()));
 
     TrackingUnit::LogSample log_h;
     static float last_diff_percent_h = 0.0f;

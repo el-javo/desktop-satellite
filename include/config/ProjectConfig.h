@@ -5,6 +5,7 @@
 #include "sensors/LightSensorPair.h"
 #include "drivers/MotorDriver.h"
 #include "track/TrackerController.h"
+#include "track/TravelGuard.h"
 #include "sensors/Dht11Sensor.h"
 #include "display/DisplayManager.h"
 #include "sensors/TouchButton.h"
@@ -97,7 +98,7 @@ static const int MOTOR_PWM_CH_IN1_V = 2;
 static const int MOTOR_PWM_CH_IN2_V = 3;
 static const float MOTOR_PWM_MIN_NORM_V = 0.8f; // 0..1
 static const float MOTOR_PWM_MAX_NORM_V = 0.99f; // 0..1
-static const float MOTOR_PWM_SMOOTH_V = 0.0f;   // 0..1 (0 = instant, 1 = very smooth)
+static const float MOTOR_PWM_SMOOTH_V = 1.0f;   // 0..1 (0 = instant, 1 = very smooth)
 static const float MOTOR_PWM_KICK_NORM_V = 0.8f; // 0..1
 static const unsigned long MOTOR_PWM_KICK_MS_V = 200;
 
@@ -194,6 +195,28 @@ static const TouchButton::Config TOUCH_BUTTON_CFG = {
     TOUCH_BUTTON_ACTIVE_HIGH,
     TOUCH_BUTTON_DEBOUNCE_MS,
     TOUCH_BUTTON_LONG_PRESS_MS
+};
+
+//! ----- Travel guard (NC endstops) -----
+// NC switches with pull-up: pressed/open circuit -> HIGH on input.
+static const int TRAVEL_GUARD_PIN_1 = 19;
+static const int TRAVEL_GUARD_PIN_2 = 22;
+static const bool TRAVEL_GUARD_ACTIVE_HIGH = true;
+static const bool TRAVEL_GUARD_USE_PULLUP = true;
+static const unsigned long TRAVEL_GUARD_DEBOUNCE_MS = 25;
+static const float TRAVEL_GUARD_SWEEP_NORM = MOTOR_PWM_MAX_NORM_V;
+static const int TRAVEL_GUARD_DIR_FROM_PIN_1 = +1; // When pin 1 is hit, move towards pin 2
+static const int TRAVEL_GUARD_DIR_FROM_PIN_2 = -1; // When pin 2 is hit, move towards pin 1
+
+static const TravelGuard::Config TRAVEL_GUARD_CFG = {
+    TRAVEL_GUARD_PIN_1,
+    TRAVEL_GUARD_PIN_2,
+    TRAVEL_GUARD_ACTIVE_HIGH,
+    TRAVEL_GUARD_USE_PULLUP,
+    TRAVEL_GUARD_DEBOUNCE_MS,
+    TRAVEL_GUARD_SWEEP_NORM,
+    TRAVEL_GUARD_DIR_FROM_PIN_1,
+    TRAVEL_GUARD_DIR_FROM_PIN_2
 };
 
 } // namespace ProjectConfig

@@ -32,6 +32,10 @@ public:
             has_diff_ = true;
         }
 
+        if (target_override_active_) {
+            motor_.setTargetNormalized(target_override_norm_);
+        }
+
         bool motor_enabled = true;
         if (motor_override_active_) {
             motor_enabled = motor_override_enabled_;
@@ -47,6 +51,13 @@ public:
     }
 
     void clearMotorOverride() { motor_override_active_ = false; }
+
+    void setTargetOverride(float signed_norm) {
+        target_override_active_ = true;
+        target_override_norm_ = constrain(signed_norm, -1.0f, 1.0f);
+    }
+
+    void clearTargetOverride() { target_override_active_ = false; }
 
     bool isMotorEnabled() const { return motor_enabled_last_; }
     bool hasDiffSample() const { return has_diff_; }
@@ -75,5 +86,7 @@ private:
     bool has_diff_ = false;
     bool motor_override_active_ = false;
     bool motor_override_enabled_ = true;
+    bool target_override_active_ = false;
+    float target_override_norm_ = 0.0f;
     bool motor_enabled_last_ = true;
 };
