@@ -4,6 +4,7 @@
 #include <driver/rtc_io.h>
 
 #include "track/TrackingUnit.h"
+#include "track/TrackingCoordinator.h"
 #include "sensors/Dht11Sensor.h"
 #include "sensors/TouchButton.h"
 #include "display/DisplayManager.h"
@@ -23,6 +24,15 @@ TrackingUnit tracking_unit_v(
     ProjectConfig::SENSOR_CFG_V,
     ProjectConfig::TRACKER_CFG_V,
     ProjectConfig::MOTOR_CFG_V);
+TrackingCoordinator tracking_coordinator(
+    {
+        ProjectConfig::DIFF_DEADBAND_H,
+        ProjectConfig::DIFF_DEADBAND_V,
+        ProjectConfig::AUTO_BLOCK_DEADBAND_HOLD_MS,
+        ProjectConfig::AUTO_BLOCK_DURATION_MS
+    },
+    tracking_unit_h,
+    tracking_unit_v);
 
 Dht11Sensor dht11(ProjectConfig::DHT_CFG);
 TouchButton touch_button(ProjectConfig::TOUCH_BUTTON_CFG);
@@ -31,20 +41,20 @@ SystemMode system_mode = SystemMode::Active;
 
 static void applySystemMode(SystemMode mode) {
     if (mode == SystemMode::Active) {
-        tracking_unit_h.clearMotorOverride();
-        tracking_unit_v.clearMotorOverride();
-        tracking_unit_h.setAutoBlockEnabled(true);
-        tracking_unit_v.setAutoBlockEnabled(true);
+        tracking_coordinator.setEnabled(true);
+        tracking_coordinator.resetState();
+        tracking_unit_h.setMotorOverride(true);
+        tracking_unit_v.setMotorOverride(true);
     } else if (mode == SystemMode::ActiveBlocked) {
-        tracking_unit_h.setAutoBlockEnabled(false);
-        tracking_unit_v.setAutoBlockEnabled(false);
+        tracking_coordinator.setEnabled(false);
+        tracking_coordinator.resetState();
         tracking_unit_h.setMotorOverride(false);
         tracking_unit_v.setMotorOverride(false);
     } else {
+        tracking_coordinator.setEnabled(false);
+        tracking_coordinator.resetState();
         tracking_unit_h.clearMotorOverride();
         tracking_unit_v.clearMotorOverride();
-        tracking_unit_h.setAutoBlockEnabled(false);
-        tracking_unit_v.setAutoBlockEnabled(false);
     }
 }
 
@@ -111,12 +121,6 @@ void setup() {
 
     tracking_unit_h.begin();
     tracking_unit_v.begin();
-    tracking_unit_h.setAutoBlockConfig(
-        ProjectConfig::AUTO_BLOCK_DEADBAND_HOLD_MS,
-        ProjectConfig::AUTO_BLOCK_DURATION_MS);
-    tracking_unit_v.setAutoBlockConfig(
-        ProjectConfig::AUTO_BLOCK_DEADBAND_HOLD_MS,
-        ProjectConfig::AUTO_BLOCK_DURATION_MS);
     dht11.begin();
     touch_button.begin();
     display.begin();
@@ -176,9 +180,13 @@ void loop() {
 
     tracking_unit_h.tick(now_ms);
     tracking_unit_v.tick(now_ms);
+    if (system_mode == SystemMode::Active) {
+        tracking_coordinator.tick(now_ms);
+    }
     dht11.tick(now_ms);
     display.setBlocked(
-        !(tracking_unit_h.isMotorEnabled() && tracking_unit_v.isMotorEnabled()));
+        (system_mode == SystemMode::ActiveBlocked) ||
+        (system_mode == SystemMode::Active && tracking_coordinator.isBlocked()));
 
     TrackingUnit::LogSample log_h;
     static float last_diff_percent_h = 0.0f;
