@@ -123,6 +123,11 @@ void setup() {
     display.setMode(DisplayManager::Mode::Tracking);
     display.setDeadbandPercent(ProjectConfig::DISPLAY_DEADBAND_PERCENT);
     display.setPwmThresholdPercent(ProjectConfig::DISPLAY_PWM_THRESHOLD_PERCENT);
+    display.setMotorPwmRanges(
+        ProjectConfig::MOTOR_PWM_MIN_NORM_H,
+        ProjectConfig::MOTOR_PWM_MAX_NORM_H,
+        ProjectConfig::MOTOR_PWM_MIN_NORM_V,
+        ProjectConfig::MOTOR_PWM_MAX_NORM_V);
     display.setBatteryPercent(ProjectConfig::BATTERY_PERCENT_MOCK);
     display.setSolarChargePercent(ProjectConfig::SOLAR_PERCENT_MOCK);
     display.setSolarCharging(ProjectConfig::SOLAR_CHARGING_MOCK);

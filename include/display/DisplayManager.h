@@ -75,6 +75,24 @@ public:
         dirty_ = true;
     }
 
+    void setMotorPwmRanges(float h_min, float h_max, float v_min, float v_max) {
+        pwm_h_min_norm_ = constrain(h_min, 0.0f, 1.0f);
+        pwm_h_max_norm_ = constrain(h_max, 0.0f, 1.0f);
+        pwm_v_min_norm_ = constrain(v_min, 0.0f, 1.0f);
+        pwm_v_max_norm_ = constrain(v_max, 0.0f, 1.0f);
+        if (pwm_h_max_norm_ < pwm_h_min_norm_) {
+            const float tmp = pwm_h_min_norm_;
+            pwm_h_min_norm_ = pwm_h_max_norm_;
+            pwm_h_max_norm_ = tmp;
+        }
+        if (pwm_v_max_norm_ < pwm_v_min_norm_) {
+            const float tmp = pwm_v_min_norm_;
+            pwm_v_min_norm_ = pwm_v_max_norm_;
+            pwm_v_max_norm_ = tmp;
+        }
+        dirty_ = true;
+    }
+
     void setDeadbandPercent(float deadband_percent) {
         deadband_percent_ = deadband_percent;
         dirty_ = true;
@@ -231,8 +249,16 @@ private:
     }
 
     void drawPwmGauges(int x, int y, int w, int h) {
-        drawPwmGauge(x, y, w, h, "H", pwm_h_norm_, last_pwm_h_norm_);
-        drawPwmGauge(x, y + h + 6, w, h, "V", pwm_v_norm_, last_pwm_v_norm_);
+        drawPwmGauge(
+            x, y, w, h, "H",
+            pwm_h_norm_,
+            pwm_h_min_norm_, pwm_h_max_norm_,
+            last_pwm_h_norm_);
+        drawPwmGauge(
+            x, y + h + 6, w, h, "V",
+            pwm_v_norm_,
+            pwm_v_min_norm_, pwm_v_max_norm_,
+            last_pwm_v_norm_);
     }
 
     void drawPwmGauge(int x,
@@ -241,15 +267,22 @@ private:
                       int h,
                       const char* axis_label,
                       float pwm_norm,
+                      float pwm_min_norm,
+                      float pwm_max_norm,
                       float& last_pwm_norm) {
         if (!force_full_redraw_ && pwm_norm == last_pwm_norm) {
             return;
         }
+        (void)pwm_max_norm;
 
         const uint16_t bg = colBg();
         const uint16_t frame = colAccentDim();
         const uint16_t center = colLine();
-        const uint16_t fill = (pwm_norm > 0.0f) ? colMid() : ((pwm_norm < 0.0f) ? colWarn() : colTextDim());
+        const float magnitude = fabsf(pwm_norm);
+        const float bar_ratio = constrain(magnitude, 0.0f, 1.0f);
+        const float min_threshold = constrain(pwm_min_norm, 0.0f, 1.0f);
+
+        const uint16_t fill = (magnitude > min_threshold) ? colWarn() : colMid();
 
         tft_.fillRect(x, y, w, h, bg);
         tft_.drawRect(x, y, w, h, frame);
@@ -259,7 +292,7 @@ private:
 
         const int inner_margin = 2;
         const int half_span = (w / 2) - inner_margin;
-        int bar = (int)lroundf(fabsf(pwm_norm) * (float)half_span);
+        int bar = (int)lroundf(bar_ratio * (float)half_span);
         bar = constrain(bar, 0, half_span);
         if (bar > 0) {
             if (pwm_norm > 0.0f) {
@@ -656,6 +689,10 @@ private:
     float v_avg_b_ = 0.0f;
     float pwm_h_norm_ = 0.0f;
     float pwm_v_norm_ = 0.0f;
+    float pwm_h_min_norm_ = 0.0f;
+    float pwm_h_max_norm_ = 1.0f;
+    float pwm_v_min_norm_ = 0.0f;
+    float pwm_v_max_norm_ = 1.0f;
     float last_pwm_h_norm_ = 99.0f;
     float last_pwm_v_norm_ = 99.0f;
 };
