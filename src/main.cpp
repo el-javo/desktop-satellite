@@ -29,19 +29,6 @@ TouchButton touch_button(ProjectConfig::TOUCH_BUTTON_CFG);
 DisplayManager display(ProjectConfig::DISPLAY_CFG);
 SystemMode system_mode = SystemMode::Active;
 
-static const char* systemModeLabel(SystemMode mode) {
-    switch (mode) {
-    case SystemMode::Active:
-        return "ACTIVE";
-    case SystemMode::ActiveBlocked:
-        return "ACTIVE_BLOCKED";
-    case SystemMode::DeepSleep:
-        return "DEEPSLEEP";
-    default:
-        return "UNKNOWN";
-    }
-}
-
 static void applySystemMode(SystemMode mode) {
     if (mode == SystemMode::Active) {
         tracking_unit_h.clearMotorOverride();
@@ -114,7 +101,6 @@ static void enterDeepSleep() {
 }
 
 void setup() {
-    Serial.begin(115200);
     WiFi.mode(WIFI_OFF);
 
     releaseBacklightHold();
@@ -138,6 +124,8 @@ void setup() {
     display.setDeadbandPercent(ProjectConfig::DISPLAY_DEADBAND_PERCENT);
     display.setPwmThresholdPercent(ProjectConfig::DISPLAY_PWM_THRESHOLD_PERCENT);
     display.setBatteryPercent(ProjectConfig::BATTERY_PERCENT_MOCK);
+    display.setSolarChargePercent(ProjectConfig::SOLAR_PERCENT_MOCK);
+    display.setSolarCharging(ProjectConfig::SOLAR_CHARGING_MOCK);
     esp_sleep_wakeup_cause_t wake = esp_sleep_get_wakeup_cause();
     if (wake == ESP_SLEEP_WAKEUP_TIMER) {
         system_mode = SystemMode::DeepSleep;
@@ -147,11 +135,6 @@ void setup() {
     }
     applySystemMode(system_mode);
     display.setActiveIndicator(system_mode == SystemMode::Active);
-
-    Serial.println("System initialized");
-    Serial.println("Format: LDR_A | LDR_B | DIFF_% | PWM");
-    Serial.print("System mode: ");
-    Serial.println(systemModeLabel(system_mode));
 }
 
 void loop() {
@@ -161,25 +144,17 @@ void loop() {
     static unsigned long deep_sleep_deadband_ms = 0;
     static bool have_diff_h = false;
     static bool have_diff_v = false;
+    static float last_pwm_norm_h = 0.0f;
+    static float last_pwm_norm_v = 0.0f;
     if (touch_button.consumeLongPress()) {
-        if (ProjectConfig::TOUCH_BUTTON_LOG_ENABLED) {
-            Serial.print("Button: LONG_PRESS at ");
-            Serial.println(now_ms);
-        }
         if (system_mode != SystemMode::DeepSleep) {
             system_mode = SystemMode::DeepSleep;
-            Serial.print("System mode: ");
-            Serial.println(systemModeLabel(system_mode));
             applySystemMode(system_mode);
             prepareForSleep(now_ms);
             enterDeepSleep();
         }
     }
     if (touch_button.consumeShortPress()) {
-        if (ProjectConfig::TOUCH_BUTTON_LOG_ENABLED) {
-            Serial.print("Button: SHORT_PRESS at ");
-            Serial.println(now_ms);
-        }
         if (system_mode == SystemMode::DeepSleep) {
             system_mode = SystemMode::Active;
         } else if (system_mode == SystemMode::Active) {
@@ -187,8 +162,6 @@ void loop() {
         } else if (system_mode == SystemMode::ActiveBlocked) {
             system_mode = SystemMode::Active;
         }
-        Serial.print("System mode: ");
-        Serial.println(systemModeLabel(system_mode));
     }
     if (last_mode != system_mode) {
         applySystemMode(system_mode);
@@ -207,50 +180,26 @@ void loop() {
     static float last_diff_percent_v = 0.0f;
     if (tracking_unit_h.consumeLog(log_h)) {
         last_diff_percent_h = log_h.diff_percent;
+        last_pwm_norm_h = log_h.applied_norm;
         have_diff_h = true;
+        display.setTrackingRawH(log_h.avg_a, log_h.avg_b);
         display.setTrackingInfoHV(last_diff_percent_h, last_diff_percent_v);
-        if (ProjectConfig::LOG_H_ENABLED) {
-            Serial.print("LDR_H_A=");
-            Serial.print(log_h.avg_a);
-            Serial.print(" | LDR_H_B=");
-            Serial.print(log_h.avg_b);
-            Serial.print(" | DIFF_H=");
-            Serial.print(log_h.diff_percent, 2);
-            Serial.print(" %");
-            Serial.print(" | PWM_H=");
-            Serial.println(log_h.applied_raw);
-        }
+        display.setMotorPwmHV(last_pwm_norm_h, last_pwm_norm_v);
     }
 
     TrackingUnit::LogSample log_v;
     if (tracking_unit_v.consumeLog(log_v)) {
         last_diff_percent_v = log_v.diff_percent;
+        last_pwm_norm_v = log_v.applied_norm;
         have_diff_v = true;
+        display.setTrackingRawV(log_v.avg_a, log_v.avg_b);
         display.setTrackingInfoHV(last_diff_percent_h, last_diff_percent_v);
-        if (ProjectConfig::LOG_V_ENABLED) {
-            Serial.print("LDR_V_A=");
-            Serial.print(log_v.avg_a);
-            Serial.print(" | LDR_V_B=");
-            Serial.print(log_v.avg_b);
-            Serial.print(" | DIFF_V=");
-            Serial.print(log_v.diff_percent, 2);
-            Serial.print(" %");
-            Serial.print(" | PWM_V=");
-            Serial.println(log_v.applied_raw);
-        }
+        display.setMotorPwmHV(last_pwm_norm_h, last_pwm_norm_v);
     }
 
     Dht11Sensor::Sample dht_log;
     if (dht11.consumeSample(dht_log)) {
         display.setEnvironment(dht_log.temperature_c, dht_log.humidity_pct);
-        if (ProjectConfig::DHT_LOG_ENABLED) {
-            Serial.print("DHT11 T=");
-            Serial.print(dht_log.temperature_c, 1);
-            Serial.print(" C");
-            Serial.print(" | H=");
-            Serial.print(dht_log.humidity_pct, 1);
-            Serial.println(" %");
-        }
     }
 
     if (system_mode == SystemMode::DeepSleep) {
@@ -283,3 +232,4 @@ void loop() {
 
     display.tick(now_ms);
 }
+

@@ -43,7 +43,7 @@ static const float MOTOR_PWM_KICK_NORM_H = 0.8f; // 0..1
 static const unsigned long MOTOR_PWM_KICK_MS_H = 200;
 
 // Logging toggle for H tracking
-static const bool LOG_H_ENABLED = false;
+static const bool LOG_H_ENABLED = true;
 
 // Light sensor pair configuration (H)
 static const LightSensorPair::Config SENSOR_CFG_H = {
@@ -77,8 +77,8 @@ static const MotorDriver::Config MOTOR_CFG_H = {
 
 //! ----- Tracking V axis (Vertical) -----
 // LDR pins (analog inputs) - set to H if you want to mirror for testing
-static const int LDR_V_PIN_A = LDR_H_PIN_A;
-static const int LDR_V_PIN_B = LDR_H_PIN_B;
+static const int LDR_V_PIN_A = 32;
+static const int LDR_V_PIN_B = 34;
 
 // Motor driver pins (H-bridge inputs)
 static const int MOTOR_V_IN1_PIN = -1;
@@ -102,7 +102,7 @@ static const float MOTOR_PWM_KICK_NORM_V = 0.8f; // 0..1
 static const unsigned long MOTOR_PWM_KICK_MS_V = 200;
 
 // Logging toggle for V tracking
-static const bool LOG_V_ENABLED = false;
+static const bool LOG_V_ENABLED = true;
 
 // Light sensor pair configuration (V)
 static const LightSensorPair::Config SENSOR_CFG_V = {
@@ -162,6 +162,8 @@ static const DisplayManager::Config DISPLAY_CFG = {
 
 // Battery (mock for now)
 static const float BATTERY_PERCENT_MOCK = 80.0f;
+static const float SOLAR_PERCENT_MOCK = 45.0f;
+static const bool SOLAR_CHARGING_MOCK = true;
 
 //! ----- DHT11 config -----
 static const int DHT11_PIN = 21;
@@ -195,3 +197,5 @@ static const TouchButton::Config TOUCH_BUTTON_CFG = {
 };
 
 } // namespace ProjectConfig
+
+
